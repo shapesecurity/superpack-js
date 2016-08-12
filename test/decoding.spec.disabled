@@ -1,0 +1,18 @@
+var expect = require('chai').expect;
+var types = require('./types');
+var decoder = require('../src/decoder');
+var decode = decoder.decode;
+
+var cases = require('./cases');
+describe('decoding', function () {
+  var categories = Object.keys(cases);
+  Object.keys(cases).forEach((category) => {
+    describe(category, function () {
+      (cases[category]).forEach(function (test) {
+        it('should decode ' + test.desc, function () {
+          expect(decode(test.bytes)).to.eql(test.value);
+        });
+      });
+    });
+  });
+});

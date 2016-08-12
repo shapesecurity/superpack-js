@@ -1,0 +1,32 @@
+{
+  "name": "superpack",
+  "author": "Shape Security",
+  "version": "2.0.0-pre-a",
+  "description": "JavaScript implementation of the SuperPack extensible schemaless binary encoding format",
+  "scripts": {
+    "test": "mocha test/*.spec.js"
+  },
+  "devDependencies": {
+    "chai": "^3.4.0",
+    "eslint": "3.2.2",
+    "mocha": "^2.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:shapesecurity/superpack-js.git"
+  },
+  "keywords": [
+    "super",
+    "pack",
+    "encoding",
+    "decoding",
+    "transcoding",
+    "encoder",
+    "decoder",
+    "transcoder",
+    "binary",
+    "extensible",
+    "schemaless"
+  ],
+  "license": "Apache-2.0"
+}
