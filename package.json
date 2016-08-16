@@ -4,7 +4,7 @@
   "version": "2.0.0-pre-a",
   "description": "JavaScript implementation of the SuperPack extensible schemaless binary encoding format",
   "scripts": {
-    "test": "mocha test/*.spec.js"
+    "test": "mocha --timeout 30000 --slow 100 test/*.spec.js"
   },
   "devDependencies": {
     "chai": "^3.4.0",

@@ -20,7 +20,6 @@ function decodeUtf8(bytes) {
 
 describe('utf8', function () {
   it('should encode any char as utf8', function () {
-    this.timeout(5000);
     var i, c;
     for (i = 0; i < 0xD800; i++) {
       c = String.fromCodePoint(i);
