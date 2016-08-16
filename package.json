@@ -6,6 +6,10 @@
   "scripts": {
     "test": "mocha --timeout 30000 --slow 100 test/*.spec.js"
   },
+  "files": [
+    "src",
+    "index.js"
+  ],
   "devDependencies": {
     "chai": "^3.4.0",
     "eslint": "3.2.2",
