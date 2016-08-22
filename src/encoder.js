@@ -1,47 +1,10 @@
 'use strict';
 
+var tags = require('./type-tags.js');
+
 var F8 = 0xFFFFFFFF;
 var F4 = 0xFFFF;
 var F2 = 0xFF;
-
-/* eslint-disable no-unused-vars */
-var UINT6_BASE = 0x00,
-    UINT14_BASE = 0x40,
-    NINT4_BASE = 0x80,
-    BARRAY4_BASE = 0x90,
-    ARRAY5_BASE = 0xA0,
-    STR5_BASE = 0xC0,
-    FALSE = 0xE0,
-    TRUE = 0xE1,
-    NULL = 0xE2,
-    UNDEFINED = 0xE3,
-    UINT16 = 0xE4,
-    UINT24 = 0xE5,
-    UINT32 = 0xE6,
-    UINT64 = 0xE7,
-    NINT8 = 0xE8,
-    NINT16 = 0xE9,
-    NINT32 = 0xEA,
-    NINT64 = 0xEB,
-    FLOAT32 = 0xEC,
-    DOUBLE64 = 0xED,
-    TIMESTAMP = 0xEE,
-    BINARY_ = 0xEF,
-    CSTRING = 0xF0,
-    STR8 = 0xF1,
-    STR_ = 0xF2,
-    STRLU = 0xF3,
-    ARRAY8 = 0xF4,
-    ARRAY_ = 0xF5,
-    BARRAY8 = 0xF6,
-    BARRAY_ = 0xF7,
-    MAP_ = 0xF8,
-    BMAP_ = 0xF9,
-    MAPL_ = 0xFA,
-    BMAPL_ = 0xFB,
-    STRLUT = 0xFE,
-    EXTENSION = F2;
-/* eslint-enable no-unused-var */
 
 var zeros23 = '00000000000000000000000';
 var keysetLUT, keysetList, stringHist, stringPlaceholders;
@@ -72,7 +35,7 @@ function encodeString(str, target, lut) {
   if (lut && (index = lut.indexOf(str)) !== -1) {
     // Using indexOf knowing lut.length <= 255 so it's O(1)
     // todo: consider better ways to do this
-    target.push(STRLU, index);
+    target.push(tags.STRREF, index);
   } else {
     // Note: this encoding fails if value contains an unmatched surrogate half.
     // utf8Ascii will be an ascii representation of UTF-8 bytes
@@ -87,14 +50,14 @@ function encodeString(str, target, lut) {
 
     var numBytes = utf8Bytes.length;
     if (numBytes < 32) {
-      target.push(STR5_BASE | numBytes);
+      target.push(tags.STR5_BASE | numBytes);
     } else if (!containsNull) {
-      target.push(CSTRING);
+      target.push(tags.CSTRING);
       utf8Bytes.push(0);
     } else if (numBytes <= F2) {
-      target.push(STR8, numBytes);
+      target.push(tags.STR8, numBytes);
     } else {
-      target.push(STR_);
+      target.push(tags.STR_);
       encodeUInt(numBytes, target);
     }
     // todo: find way around blowing callstack with huge strings
@@ -106,16 +69,16 @@ function encodeUInt(value, target) {
   if (value <= 63) {
     target.push(value);
   } else if (value <= 0x3FFF) {
-    target.push(UINT14_BASE | (value >> 8), value & F2);
+    target.push(tags.UINT14_BASE | (value >> 8), value & F2);
   } else if (value <= F4) {
-    target.push(UINT16, value >> 8, value & F2);
+    target.push(tags.UINT16, value >> 8, value & F2);
   } else if (value <= 0xFFFFFF) {
-    target.push(UINT24, value >> 16, (value >> 8) & F2, value & F2);
+    target.push(tags.UINT24, value >> 16, (value >> 8) & F2, value & F2);
   } else if (value <= F8) {
-    target.push(UINT32);
+    target.push(tags.UINT32);
     pushUInt32(value, target);
   } else {
-    target.push(UINT64);
+    target.push(tags.UINT64);
     pushUInt32((value / 0x100000000) & F8, target);
     pushUInt32(value & F8, target);
   }
@@ -123,22 +86,22 @@ function encodeUInt(value, target) {
 
 function encodeInteger(value, target) {
   if (value === 0 && 1 / value === -Infinity) {
-    target.push(NINT4_BASE);
+    target.push(tags.NINT4_BASE);
   } else if (value >= 0) {
     encodeUInt(value, target);
   } else {
     var magnitude = -value;
     if (magnitude <= 15) {
-      target.push(NINT4_BASE | magnitude);
+      target.push(tags.NINT4_BASE | magnitude);
     } else if (magnitude <= F2) {
-      target.push(NINT8, magnitude);
+      target.push(tags.NINT8, magnitude);
     } else if (magnitude <= F4) {
-      target.push(NINT16, magnitude >> 8, magnitude & F2);
+      target.push(tags.NINT16, magnitude >> 8, magnitude & F2);
     } else if (magnitude <= F8) {
-      target.push(NINT32);
+      target.push(tags.NINT32);
       pushUInt32(magnitude, target);
     } else {
-      target.push(NINT64);
+      target.push(tags.NINT64);
       pushUInt32((magnitude / 0x100000000) & F8, target);
       pushUInt32(magnitude & F8, target);
     }
@@ -149,7 +112,7 @@ function encodeDate(value, target) {
   // timestamp: same as uint48, with unix timestamp in ms
   var timestamp = Date.prototype.getTime.call(value);
   var high = (timestamp / 0x100000000) & F4;
-  target.push(TIMESTAMP, high >> 8, high & F2);
+  target.push(tags.TIMESTAMP, high >> 8, high & F2);
   pushUInt32(timestamp & F8, target);
 }
 
@@ -177,7 +140,7 @@ function encodeFloat(value, target) {
     exp += 127;
     if (negative) exp |= 0x100;
     mantissa = parseInt(mantissa + zeros23.slice(mantissa.length), 2);
-    target.push(FLOAT32);
+    target.push(tags.FLOAT32);
     pushUInt32(mantissa | (exp << 23), target);
   } else {
     // need to use double64
@@ -190,7 +153,7 @@ function encodeFloat(value, target) {
       2
     );
 
-    target.push(DOUBLE64);
+    target.push(tags.DOUBLE64);
     pushUInt32(((mantissa / 0x100000000) & 0xFFFFF) | (exp << 20), target);
     pushUInt32(mantissa & F8, target);
   }
@@ -228,21 +191,21 @@ function buildLUT(hist) {
 function encodeValue(value, target) {
   var i, containsOnlyBooleans;
   if (value === false) {
-    target.push(FALSE);
+    target.push(tags.FALSE);
   } else if (value === true) {
-    target.push(TRUE);
+    target.push(tags.TRUE);
   } else if (value === null) {
-    target.push(NULL);
+    target.push(tags.NULL);
   } else if (typeof value === 'undefined') {
-    target.push(UNDEFINED);
+    target.push(tags.UNDEFINED);
   } else if (typeof value === 'number') {
     if (!isFinite(value)) {
       if (value === Infinity) {
-        target.push(FLOAT32, 0x7F, 0x80, 0x00, 0x00);
+        target.push(tags.FLOAT32, 0x7F, 0x80, 0x00, 0x00);
       } else if (value === -Infinity) {
-        target.push(FLOAT32, F2, 0x80, 0x00, 0x00);
+        target.push(tags.FLOAT32, F2, 0x80, 0x00, 0x00);
       } else if (Number.isNaN(value)) {
-        target.push(FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
+        target.push(tags.FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
       }
     } else if (Math.floor(value) === value && value < 0xFFFFFFFFFFFFFFFF) {
       encodeInteger(value, target);
@@ -269,11 +232,11 @@ function encodeValue(value, target) {
 
     if (containsOnlyBooleans && numElements > 0) {
       if (numElements <= 15) {
-        target.push(BARRAY4_BASE | numElements);
+        target.push(tags.BARRAY4_BASE | numElements);
       } else if (numElements <= 255) {
-        target.push(BARRAY8, numElements);
+        target.push(tags.BARRAY8, numElements);
       } else {
-        target.push(BARRAY_);
+        target.push(tags.BARRAY_);
         encodeUInt(numElements, target);
       }
       for (i = 0; i < numElements; i += 8) {
@@ -282,11 +245,11 @@ function encodeValue(value, target) {
       }
     } else {
       if (numElements <= 31) {
-        target.push(ARRAY5_BASE | numElements);
+        target.push(tags.ARRAY5_BASE | numElements);
       } else if (numElements <= 255) {
-        target.push(ARRAY8, numElements);
+        target.push(tags.ARRAY8, numElements);
       } else {
-        target.push(ARRAY_);
+        target.push(tags.ARRAY_);
         encodeUInt(numElements, target);
       }
       pushArrayElements(value, target);
@@ -302,7 +265,7 @@ function encodeValue(value, target) {
     });
 
     if (containsOnlyBooleans) {
-      target.push(BMAP_);
+      target.push(tags.BMAP_);
       encodeUInt(keysetIndex, target);
 
       var b = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -313,7 +276,7 @@ function encodeValue(value, target) {
         target.push(byteFromBools(b, 0));
       }
     } else {
-      target.push(MAP_);
+      target.push(tags.MAP_);
       encodeUInt(keysetIndex, target);
 
       keys.forEach(function (key) {
@@ -338,7 +301,7 @@ module.exports = function encode(value) {
   stringPlaceholders = false;
 
   if (stringLUT.length > 0 || keysetList.length > 0) {
-    output.push(STRLUT);
+    output.push(tags.STRLUT);
     output.push(stringLUT.length);
     pushArrayElements(stringLUT, output);
     data = keysetData.concat(data);

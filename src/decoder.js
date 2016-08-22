@@ -1,43 +1,6 @@
 'use strict';
 
-/* eslint-disable no-unused-vars */
-var UINT6_BASE = 0x00,
-    UINT14_BASE = 0x40,
-    NINT4_BASE = 0x80,
-    BARRAY4_BASE = 0x90,
-    ARRAY5_BASE = 0xA0,
-    STR5_BASE = 0xC0,
-    FALSE = 0xE0,
-    TRUE = 0xE1,
-    NULL = 0xE2,
-    UNDEFINED = 0xE3,
-    UINT16 = 0xE4,
-    UINT24 = 0xE5,
-    UINT32 = 0xE6,
-    UINT64 = 0xE7,
-    NINT8 = 0xE8,
-    NINT16 = 0xE9,
-    NINT32 = 0xEA,
-    NINT64 = 0xEB,
-    FLOAT32 = 0xEC,
-    DOUBLE64 = 0xED,
-    TIMESTAMP = 0xEE,
-    BINARY_ = 0xEF,
-    CSTRING = 0xF0,
-    STR8 = 0xF1,
-    STR_ = 0xF2,
-    STRLU = 0xF3,
-    ARRAY8 = 0xF4,
-    ARRAY_ = 0xF5,
-    BARRAY8 = 0xF6,
-    BARRAY_ = 0xF7,
-    MAP_ = 0xF8,
-    BMAP_ = 0xF9,
-    MAPL_ = 0xFA,
-    BMAPL_ = 0xFB,
-    STRLUT = 0xFE,
-    EXTENSION = 0xFF;
-/* eslint-enable no-unused-vars */
+var tags = require('./type-tags.js');
 
 /*
 
@@ -63,7 +26,7 @@ factor out various common threads
 var stringLUT, keysetLUT, ptr;
 module.exports = function decode(buf) {
   ptr = 0;
-  if (buf[0] === STRLUT) {
+  if (buf[0] === tags.STRLUT) {
     stringLUT = decodeValue(buf);
     keysetLUT = decodeValue(buf);
   } else {
@@ -136,74 +99,74 @@ function readBooleanArray(buf, length) {
 
 function decodeValue(buf) {
   var type = buf[ptr++];
-  if (type < UINT14_BASE) {
+  if (type < tags.UINT14_BASE) {
     return type;
-  } else if (type < NINT4_BASE) {
-    return (type ^ UINT14_BASE) << 8 | buf[ptr++];
-  } else if (type < BARRAY4_BASE) {
-    return -(type ^ NINT4_BASE);
-  } else if (type < ARRAY5_BASE) {
-    return readBooleanArray(buf, type ^ BARRAY4_BASE);
-  } else if (type < STR5_BASE) {
-    return readArray(buf, type ^ ARRAY5_BASE);
-  } else if (type < FALSE) {
-    return readString(buf, type ^ STR5_BASE);
+  } else if (type < tags.NINT4_BASE) {
+    return (type ^ tags.UINT14_BASE) << 8 | buf[ptr++];
+  } else if (type < tags.BARRAY4_BASE) {
+    return -(type ^ tags.NINT4_BASE);
+  } else if (type < tags.ARRAY5_BASE) {
+    return readBooleanArray(buf, type ^ tags.BARRAY4_BASE);
+  } else if (type < tags.STR5_BASE) {
+    return readArray(buf, type ^ tags.ARRAY5_BASE);
+  } else if (type < tags.FALSE) {
+    return readString(buf, type ^ tags.STR5_BASE);
   }
   switch (type) {
-    case FALSE: return false;
-    case TRUE: return true;
-    case NULL: return null;
-    case UNDEFINED: return void 0;
-    case UINT16:
+    case tags.FALSE: return false;
+    case tags.TRUE: return true;
+    case tags.NULL: return null;
+    case tags.UNDEFINED: return void 0;
+    case tags.UINT16:
       return (buf[ptr++]) << 8 | buf[ptr++];
-    case UINT24:
+    case tags.UINT24:
       return (buf[ptr++]) << 16 | (buf[ptr++]) << 8 | buf[ptr++];
-    case UINT32:
+    case tags.UINT32:
       return readUInt32(buf);
-    case UINT64:
+    case tags.UINT64:
       return readUInt32(buf) * 0x100000000 + readUInt32(buf);
-    case NINT8:
+    case tags.NINT8:
       return -(buf[ptr++]);
-    case NINT16:
+    case tags.NINT16:
       return -((buf[ptr++]) << 8 | buf[ptr++]);
-    case NINT32:
+    case tags.NINT32:
       return -readUInt32(buf);
-    case NINT64:
+    case tags.NINT64:
       return -(readUInt32(buf) * 0x100000000 + readUInt32(buf));
-    case FLOAT32:
+    case tags.FLOAT32:
       return readFloat(buf, false);
-    case DOUBLE64:
+    case tags.DOUBLE64:
       return readFloat(buf, true);
-    case TIMESTAMP:
+    case tags.TIMESTAMP:
       // todo, stubbed
       ptr += 6;
       return 0;
-    case CSTRING:
+    case tags.CSTRING:
       var str = '';
       while (buf[ptr] !== 0) {
         str += String.fromCharCode(buf[ptr++]);
       }
       ptr++;
       return decodeURIComponent(escape(str));
-    case STR8:
+    case tags.STR8:
       return readString(buf, buf[ptr++]);
-    case STR_:
+    case tags.STR_:
       return readString(buf, decodeValue(buf));
-    case STRLU:
+    case tags.STRREF:
       return stringLUT[buf[ptr++]];
 
-    case ARRAY8:
-    case STRLUT:
+    case tags.ARRAY8:
+    case tags.STRLUT:
       return readArray(buf, buf[ptr++]);
-    case ARRAY_:
+    case tags.ARRAY_:
       return readArray(buf, decodeValue(buf));
 
-    case BARRAY8:
+    case tags.BARRAY8:
       return readBooleanArray(buf, buf[ptr++]);
-    case BARRAY_:
+    case tags.BARRAY_:
       return readBooleanArray(buf, decodeValue(buf));
 
-    case MAP_:
+    case tags.MAP_:
       var out = {};
       var keysetIndex = decodeValue(buf);
       var keys = keysetLUT[keysetIndex];
@@ -212,7 +175,7 @@ function decodeValue(buf) {
       });
       return out;
 
-    case BMAP_:
+    case tags.BMAP_:
       var out = {};
       var keysetIndex = decodeValue(buf);
       var keys = keysetLUT[keysetIndex];
