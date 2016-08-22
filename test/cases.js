@@ -1,6 +1,6 @@
 'use strict';
 
-var types = require('./types');
+var types = require('../src/type-tags.js');
 
 module.exports = {
   'basic values': [
