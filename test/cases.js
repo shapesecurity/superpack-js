@@ -2,6 +2,12 @@
 
 var types = require('../src/type-tags.js');
 
+var littleEndian = (function () {
+  var buffer = new ArrayBuffer(2);
+  new DataView(buffer).setInt16(0, 256, true);
+  return new Int16Array(buffer)[0] === 256;
+})();
+
 module.exports = {
   'basic values': [
     {
@@ -467,5 +473,35 @@ module.exports = {
       ],
       desc: 'a 16-element bmap as bmap_'
     }
-  ]
+  ],
+  'binary data and typed arrays': [
+    {
+      value: new ArrayBuffer,
+      bytes: [types.BINARY_, types.UINT6_BASE | 0],
+      desc: 'an empty ArrayBuffer',
+    },
+    {
+      value: Uint8Array.of(0, 1, 2, 3).buffer,
+      bytes: [
+        types.BINARY_,
+        types.UINT6_BASE | 4,
+        0, 1, 2, 3,
+      ],
+      desc: 'a small ArrayBuffer',
+    },
+    {
+      value: Int32Array.of(1, 2, 3).buffer,
+      bytes:
+        littleEndian ? [
+          types.BINARY_,
+          types.UINT6_BASE | 12,
+          1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0,
+        ] : [
+          types.BINARY_,
+          types.UINT6_BASE | 12,
+          0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3,
+        ],
+      desc: 'a larger ArrayBuffer',
+    },
+  ],
 };
