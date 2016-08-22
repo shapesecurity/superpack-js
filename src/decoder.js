@@ -19,7 +19,6 @@ todo:
 mapl, bmapl
 timestamp
 extension
-binary
 factor out various common threads
 */
 
@@ -183,6 +182,12 @@ function decodeValue(buf) {
       for (var i = 0; i < keys.length; ++i) {
         out[keys[i]] = bools[i];
       }
+      return out;
+
+    case tags.BINARY_:
+      var length = decodeValue(buf);
+      var out = Uint8Array.from(buf.slice(ptr, length)).buffer;
+      ptr += length;
       return out;
 
     default:
