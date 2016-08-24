@@ -109,11 +109,12 @@ function encodeInteger(value, target) {
 }
 
 function encodeDate(value, target) {
-  // timestamp: same as uint48, with unix timestamp in ms
+  // timestamp: same as int48, with unix timestamp in ms
   var timestamp = Date.prototype.getTime.call(value);
-  var high = (timestamp / 0x100000000) & F4;
-  target.push(tags.TIMESTAMP, high >> 8, high & F2);
-  pushUInt32(timestamp & F8, target);
+  var high = timestamp / 0x100000000;
+  if (timestamp < 0) --high;
+  target.push(tags.TIMESTAMP, (high >>> 8) & F2, high & F2);
+  pushUInt32(timestamp >>> 0, target);
 }
 
 function encodeFloat(value, target) {
