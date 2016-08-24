@@ -136,10 +136,17 @@ function decodeValue(buf) {
       return readFloat(buf, false);
     case tags.DOUBLE64:
       return readFloat(buf, true);
+
     case tags.TIMESTAMP:
-      // todo, stubbed
-      ptr += 6;
-      return 0;
+      return new Date(
+        (buf[ptr] & 0x80) > 0
+          ? -(
+              (~(buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++]) & 0xFFFFFF) * 0x1000000 +
+              (~(buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++]) & 0xFFFFFF) + 1
+            )
+          : (buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++]) * 0x1000000 +
+            (buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++])
+      );
 
     case tags.BINARY_:
       var length = decodeValue(buf);
