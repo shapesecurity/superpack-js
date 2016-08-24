@@ -222,6 +222,10 @@ function encodeValue(value, target) {
     }
   } else if ({}.toString.call(value) === '[object Date]') {
     encodeDate(value, target);
+  } else if (value instanceof ArrayBuffer) {
+    target.push(tags.BINARY_);
+    encodeValue(value.byteLength, target);
+    pushArrayElements(new Uint8Array(value), target);
   } else if (Array.isArray(value)) {
     var numElements = value.length;
     containsOnlyBooleans = true;
@@ -254,10 +258,6 @@ function encodeValue(value, target) {
       }
       pushArrayElements(value, target);
     }
-  } else if (value instanceof ArrayBuffer) {
-    target.push(tags.BINARY_);
-    encodeValue(value.byteLength, target);
-    pushArrayElements(new Uint8Array(value), target);
   } else {
     // assumption: anything not in an earlier case can be treated as an object
     var keys = Object.keys(value).sort();
