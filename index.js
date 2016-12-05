@@ -1,7 +1,8 @@
 'use strict';
+/* eslint-disable */
 
-var encode = require('./src/encoder.js');
-var decode = require('./src/decoder.js');
+var encode = require('./dist/cjs/encoder.js');
+var decode = require('./dist/cjs/decoder.js');
 
 module.exports = {
   encode: encode,

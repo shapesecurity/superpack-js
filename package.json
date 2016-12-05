@@ -4,17 +4,62 @@
   "version": "2.0.0-pre-a",
   "description": "JavaScript implementation of the SuperPack extensible schemaless binary encoding format",
   "scripts": {
-    "test": "mocha --timeout 30000 --slow 100 test/*.spec.js"
+    "typecheck": "flow check",
+    "lint": "eslint .",
+    "pretest": "npm run lint && npm run typecheck && npm run build",
+    "test": "npm run test:local",
+    "test:local": "karma start test/local.conf.js",
+    "test:ci": "npm run pretest && mocha build/test/spec/*.spec.js",
+    "prebuild": "mkdir -p dist build",
+    "build:esm": "babel --out-dir dist/esm/ src/",
+    "build:cjs": "babel --out-dir dist/cjs/ --plugins=transform-es2015-modules-commonjs src/",
+    "build:test": "babel --out-dir build/test/spec --plugins=transform-es2015-modules-commonjs test/spec && cp -r test/spec/json/ build/test/spec/json",
+    "copy:cjs": "cp -r dist/cjs/ build/src",
+    "build:flow": "cp flow-typed/* .",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:flow && npm run build:test && npm run copy:cjs",
+    "clean": "rm dist/*.js && rmdir dist",
+    "prepublish": "npm run build"
   },
+  "main": "index.js",
+  "module": "superpack.js",
   "files": [
-    "src",
-    "index.js"
+    "index.js",
+    "superpack.js",
+    "superpack.js.flow",
+    "encoder.js",
+    "encoder.js.flow",
+    "decoder.js",
+    "decoder.js.flow",
+    "dist"
   ],
   "devDependencies": {
-    "chai": "^3.4.0",
-    "eslint": "3.2.2",
-    "gentest": "^0.1.1",
-    "mocha": "^2.3.3"
+    "babel-cli": "6.18.0",
+    "babel-eslint": "7.1.0",
+    "babel-plugin-transform-es2015-arrow-functions": "6.8.0",
+    "babel-plugin-transform-es2015-block-scoping": "6.15.0",
+    "babel-plugin-transform-es2015-classes": "6.14.0",
+    "babel-plugin-transform-es2015-destructuring": "6.9.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "6.18.0",
+    "babel-plugin-transform-es2015-parameters": "6.11.4",
+    "babel-plugin-transform-es2015-shorthand-properties": "6.8.0",
+    "babel-plugin-transform-es2015-template-literals": "6.8.0",
+    "babel-plugin-transform-flow-strip-types": "6.14.0",
+    "babel-preset-es2015": "6.18.0",
+    "babelify": "7.3.0",
+    "browserify": "13.1.0",
+    "chai": "3.5.0",
+    "eslint": "3.10.2",
+    "eslint-plugin-flowtype": "2.25.0",
+    "flow-bin": "0.36.0",
+    "gentest": "0.1.1",
+    "karma": "1.2.0",
+    "karma-browserify": "5.1.0",
+    "karma-chrome-launcher": "2.0.0",
+    "karma-expect": "1.1.0",
+    "karma-firefox-launcher": "1.0.0",
+    "karma-mocha": "1.1.1",
+    "karma-mocha-reporter": "2.1.0",
+    "mocha": "3.0.2"
   },
   "repository": {
     "type": "git",
@@ -33,5 +78,17 @@
     "extensible",
     "schemaless"
   ],
+  "browserify": {
+    "transform": [
+      [
+        "babelify",
+        {
+          "plugins": [
+            "transform-es2015-modules-commonjs"
+          ]
+        }
+      ]
+    ]
+  },
   "license": "Apache-2.0"
 }

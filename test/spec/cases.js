@@ -1,14 +1,16 @@
 'use strict';
 
-var types = require('../src/type-tags.js');
+import types from '../../src/type-tags.js';
 
-var littleEndian = (function () {
-  var buffer = new ArrayBuffer(2);
+/* globals ArrayBuffer, DataView, Int16Array */
+
+let littleEndian = (function () {
+  let buffer = new ArrayBuffer(2);
   new DataView(buffer).setInt16(0, 256, true);
   return new Int16Array(buffer)[0] === 256;
-})();
+}());
 
-module.exports = {
+export default {
   'basic values': [
     {
       value: false,
@@ -507,38 +509,38 @@ module.exports = {
   'dates': [
     {
       value: new Date(-1821292800000),
-      bytes: [ types.TIMESTAMP, 0xFE, 0x57, 0xF2, 0x7D, 0x58, 0x00 ],
-      desc: "the sinking of the RMS Titanic",
+      bytes: [types.TIMESTAMP, 0xFE, 0x57, 0xF2, 0x7D, 0x58, 0x00],
+      desc: 'the sinking of the RMS Titanic',
     },
     {
       value: new Date(-770172240000),
-      bytes: [ types.TIMESTAMP, 0xFF, 0x4C, 0xAE, 0x28, 0x3F, 0x80 ],
-      desc: "the atomic bombing of Hiroshima",
+      bytes: [types.TIMESTAMP, 0xFF, 0x4C, 0xAE, 0x28, 0x3F, 0x80],
+      desc: 'the atomic bombing of Hiroshima',
     },
     {
       value: new Date(-1000),
-      bytes: [ types.TIMESTAMP, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC, 0x18 ],
-      desc: "one second before the epoch",
+      bytes: [types.TIMESTAMP, 0xFF, 0xFF, 0xFF, 0xFF, 0xFC, 0x18],
+      desc: 'one second before the epoch',
     },
     {
       value: new Date(0),
-      bytes: [ types.TIMESTAMP, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 ],
-      desc: "the epoch",
+      bytes: [types.TIMESTAMP, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+      desc: 'the epoch',
     },
     {
       value: new Date(1000),
-      bytes: [ types.TIMESTAMP, 0x00, 0x00, 0x00, 0x00, 0x03, 0xE8 ],
-      desc: "one second after the epoch",
+      bytes: [types.TIMESTAMP, 0x00, 0x00, 0x00, 0x00, 0x03, 0xE8],
+      desc: 'one second after the epoch',
     },
     {
       value: new Date(Math.pow(2, 31) * 1000),
-      bytes: [ types.TIMESTAMP, 0x01, 0xF4, 0x00, 0x00, 0x00, 0x00 ],
-      desc: "the moment one-second resolution signed 32-bit integer timestamps overflow (aka the 2038 problem)",
+      bytes: [types.TIMESTAMP, 0x01, 0xF4, 0x00, 0x00, 0x00, 0x00],
+      desc: 'the moment one-second resolution signed 32-bit integer timestamps overflow (aka the 2038 problem)',
     },
     {
       value: new Date(17077910400000),
-      bytes: [ types.TIMESTAMP, 0x0F, 0x88, 0x42, 0xC8, 0x6C, 0x00 ],
-      desc: "the birth of Master Chief Petty Officer John-117",
+      bytes: [types.TIMESTAMP, 0x0F, 0x88, 0x42, 0xC8, 0x6C, 0x00],
+      desc: 'the birth of Master Chief Petty Officer John-117',
     },
   ],
 };
