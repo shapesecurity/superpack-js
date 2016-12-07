@@ -1,7 +1,7 @@
 {
   "name": "superpack",
   "author": "Shape Security",
-  "version": "2.0.0-pre-a",
+  "version": "2.0.0",
   "description": "JavaScript implementation of the SuperPack extensible schemaless binary encoding format",
   "scripts": {
     "typecheck": "flow check",
