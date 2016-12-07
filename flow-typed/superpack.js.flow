@@ -1,0 +1,4 @@
+// @flow
+
+declare export function decoder(buf: Array<number>): any;
+declare export function encoder(value: any): Array<number>;

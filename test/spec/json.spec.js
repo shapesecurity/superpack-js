@@ -1,10 +1,11 @@
 'use strict';
 
-var assert = require('assert');
-var encoder = require('../src/encoder');
-var decoder = require('../src/decoder');
+import { expect } from 'chai';
+import encoder from '../../src/encoder';
+import decoder from '../../src/decoder';
+import cases from './cases';
 
-var jsonStrings = [
+let jsonStrings = [
   {
     text: '[]',
     desc: 'empty array'
@@ -174,50 +175,51 @@ var jsonStrings = [
 ];
 
 describe('json encoding cases', function () {
-  jsonStrings.forEach(function (test) {
-    it('should roundtrip for ' + test.desc, function () {
-      var value = JSON.parse(test.text);
-      var encoded = encoder(value);
-      var decoded = decoder(encoded);
-      assert.deepStrictEqual(value, decoded);
-      assert.equal(JSON.stringify(value).length, JSON.stringify(decoded).length);
+  jsonStrings.forEach(function (t) {
+    it('should roundtrip for ' + t.desc, function () {
+      let value = JSON.parse(t.text);
+      let encoded = encoder(value);
+      let decoded = decoder(encoded);
+      expect(value).to.eql(decoded);
+      expect(JSON.stringify(value).length).to.equal(JSON.stringify(decoded).length);
     });
   });
 });
 
-var jsonFiles = [
-  'clarinet-basic.json',
-  'all-types.json',
-  'ten-records.json'
-];
+import clarinetBasicJson from './json/clarinet-basic.json';
+import allTypesJson from './json/all-types.json';
+import tenRecordsJson from './json/ten-records.json';
+
+function roundTrip(value) {
+  let encoded = encoder(value);
+  let decoded = decoder(encoded);
+  expect(value).to.eql(decoded);
+  expect(JSON.stringify(value).length).to.equal(JSON.stringify(decoded).length);
+}
 
 describe('json files', function () {
-  jsonFiles.forEach(function (filename) {
-    it('should roundtrip ' + filename, function () {
-      var value = require('./json/' + filename);
-      var encoded = encoder(value);
-      var decoded = decoder(encoded);
-      assert.deepStrictEqual(value, decoded);
-      assert.equal(JSON.stringify(value).length, JSON.stringify(decoded).length);
-    });
+  it('should roundtrip', function () {
+    roundTrip(clarinetBasicJson);
+    roundTrip(allTypesJson);
+    roundTrip(tenRecordsJson);
   });
 });
 
-var cases = require('./cases');
+
 describe('encoding', function () {
-  var categories = Object.keys(cases);
+  let categories = Object.keys(cases);
   categories.forEach((category) => {
     describe(category, function () {
-      cases[category].forEach(function (test) {
-        it('should encode ' + test.desc, function () {
-          var encoded = encoder(test.value);
-          var decoded = decoder(encoded);
-          if (isNaN(test.value)) {
-            assert.ok(isNaN(decoded));
+      cases[category].forEach(function (t) {
+        it('should encode ' + t.desc, function () {
+          let encoded = encoder(t.value);
+          let decoded = decoder(encoded);
+          if (isNaN(t.value)) {
+            expect(isNaN(decoded)).to.be.ok;
           } else {
-            assert.deepStrictEqual(test.value, decoded);
+            expect(t.value).to.eql(decoded);
           }
-          // assert.equal(JSON.stringify(test.value).length, JSON.stringify(decoded).length);
+          // assert.equal(JSON.stringify(t.value).length, JSON.stringify(decoded).length);
         });
       });
     });

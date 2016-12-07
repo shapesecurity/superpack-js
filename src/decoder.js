@@ -1,6 +1,4 @@
-'use strict';
-
-var tags = require('./type-tags.js');
+import tags from './type-tags.js';
 
 /*
 
@@ -22,8 +20,9 @@ extension
 factor out various common threads
 */
 
-var stringLUT, keysetLUT, ptr;
-module.exports = function decode(buf) {
+let stringLUT: Array<string>, keysetLUT, ptr: number;
+
+export default function decode(buf: Array<number>): any {
   ptr = 0;
   if (buf[0] === tags.STRLUT) {
     stringLUT = decodeValue(buf);
@@ -33,24 +32,25 @@ module.exports = function decode(buf) {
     keysetLUT = [];
   }
   return decodeValue(buf);
-};
+}
 
 function readUInt32(buf) {
   return buf[ptr++] * 0x1000000 + (buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++]);
 }
 
 function readFloat(buf, isDouble) {
-  var mantissaLen = isDouble ? 52 : 23;
-  var mixBits = isDouble ? 4 : 1;
-  var expMax = (1 << (isDouble ? 11 : 8)) - 1;
+  let mantissaLen = isDouble ? 52 : 23;
+  let mixBits = isDouble ? 4 : 1;
+  let expMax = (1 << (isDouble ? 11 : 8)) - 1;
 
   // Read sign, exponent, and beginning of mantissa from first two bytes
-  var sign = buf[ptr] >> 7 ? -1 : 1;
-  var exp = (buf[ptr++] & 127) << mixBits | (buf[ptr] >> (8 - mixBits));
-  var mantissa = buf[ptr++] & (255 >> mixBits);
+  let sign = buf[ptr] >> 7 ? -1 : 1;
+  let exp = (buf[ptr++] & 127) << mixBits | (buf[ptr] >> (8 - mixBits));
+  let mantissa = buf[ptr++] & (255 >> mixBits);
 
   // Read rest of mantissa, either 2 or 6 more bytes
-  for (var end = ptr + 2 + 4 * isDouble; ptr < end;) {
+  // $FlowFixMe: shouldn't be doing math on bools
+  for (let end = ptr + 2 + 4 * isDouble; ptr < end;) {
     mantissa = mantissa * 256 + buf[ptr++];
   }
 
@@ -68,25 +68,26 @@ function readFloat(buf, isDouble) {
   return sign * mantissa * Math.pow(2, exp - mantissaLen);
 }
 
-function readString(buf, length) {
-  var str = '';
-  for (var i = 0; i < length; ++i) {
+function readString(buf, length: number) {
+  let str = '';
+  for (let i = 0; i < length; ++i) {
     str += String.fromCharCode(buf[ptr++]);
   }
+  // $FlowFixMe: flow doesn't know about escape yet
   return decodeURIComponent(escape(str));
 }
 
-function readArray(buf, length) {
-  var out = [];
-  for (var i = 0; i < length; ++i) {
+function readArray(buf, length: number): any {
+  let out = [];
+  for (let i = 0; i < length; ++i) {
     out.push(decodeValue(buf));
   }
   return out;
 }
 
-function readBooleanArray(buf, length) {
-  var out = [];
-  for (var i = 0; i < length; ++i) {
+function readBooleanArray(buf, length: number): any {
+  let out = [];
+  for (let i = 0; i < length; ++i) {
     out[i] = (buf[ptr + (i >> 3)] & (0x80 >> (i % 8))) > 0;
   }
   ptr += (length >> 3) + (length % 8 !== 0);
@@ -96,8 +97,8 @@ function readBooleanArray(buf, length) {
 // todo: factor out "read type_ length value"
 // function readUInt(buf) {
 
-function decodeValue(buf) {
-  var type = buf[ptr++];
+function decodeValue(buf): any {
+  let type = buf[ptr++];
   if (type < tags.UINT14_BASE) {
     return type;
   } else if (type < tags.NINT4_BASE) {
@@ -148,19 +149,22 @@ function decodeValue(buf) {
             (buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++])
       );
 
-    case tags.BINARY_:
-      var length = decodeValue(buf);
-      var out = Uint8Array.from(buf.slice(ptr, length)).buffer;
+    case tags.BINARY_: {
+      let length: number = decodeValue(buf);
+      let out = Uint8Array.from(buf.slice(ptr, length)).buffer;
       ptr += length;
       return out;
+    }
 
-    case tags.CSTRING:
-      var str = '';
+    case tags.CSTRING: {
+      let str = '';
       while (buf[ptr] !== 0) {
         str += String.fromCharCode(buf[ptr++]);
       }
       ptr++;
+      // $FlowFixMe: flow doesn't know about escape yet
       return decodeURIComponent(escape(str));
+    }
     case tags.STR8:
       return readString(buf, buf[ptr++]);
     case tags.STR_:
@@ -179,24 +183,26 @@ function decodeValue(buf) {
     case tags.BARRAY_:
       return readBooleanArray(buf, decodeValue(buf));
 
-    case tags.MAP_:
-      var out = {};
-      var keysetIndex = decodeValue(buf);
-      var keys = keysetLUT[keysetIndex];
+    case tags.MAP_: {
+      let out = {};
+      let keysetIndex = decodeValue(buf);
+      let keys = keysetLUT[keysetIndex];
       keys.forEach(function (key) {
         out[key] = decodeValue(buf);
       });
       return out;
+    }
 
-    case tags.BMAP_:
-      var out = {};
-      var keysetIndex = decodeValue(buf);
-      var keys = keysetLUT[keysetIndex];
-      var bools = readBooleanArray(buf, keys.length);
-      for (var i = 0; i < keys.length; ++i) {
+    case tags.BMAP_: {
+      let out = {};
+      let keysetIndex = decodeValue(buf);
+      let keys = keysetLUT[keysetIndex];
+      let bools = readBooleanArray(buf, keys.length);
+      for (let i = 0; i < keys.length; ++i) {
         out[keys[i]] = bools[i];
       }
       return out;
+    }
 
     default:
       // This should never happen.

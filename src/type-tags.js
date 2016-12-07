@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   UINT6_BASE: 0x00,
   UINT14_BASE: 0x40,
   NINT4_BASE: 0x80,
@@ -36,4 +36,3 @@ module.exports = {
   STRLUT: 0xFE,
   EXTENSION: 0xFF,
 };
-

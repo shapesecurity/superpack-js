@@ -1,21 +1,19 @@
 'use strict';
 
-var gentest = require('gentest');
-var t = gentest.types;
-var chai = require('chai');
-var expect = chai.expect;
+import { expect } from 'chai';
 
-var encode = require('../src/encoder');
-var decode = require('../src/decoder');
-var tt = require('../src/type-tags');
+import gentest, { types as t } from 'gentest';
+
+import encode from '../../src/encoder';
+import decode from '../../src/decoder';
 
 
-var SAMPLE_SIZE = 10;
+let SAMPLE_SIZE = 10;
 
 describe('properties', function () {
 
   describe('integers should always encode to the same value', function () {
-    var generator = t.int;
+    let generator = t.int;
     gentest.sample(generator, SAMPLE_SIZE).forEach(function (a) {
       it('should deterministically encode ' + JSON.stringify(a), function () {
         expect(encode(a)).to.eql(encode(a));
@@ -24,7 +22,7 @@ describe('properties', function () {
   });
 
   describe('integers should round-trip', function () {
-    var generator = t.int;
+    let generator = t.int;
     gentest.sample(generator, SAMPLE_SIZE).forEach(function (a) {
       it('should round-trip ' + JSON.stringify(a), function () {
         expect(decode(encode(a))).to.eql(a);
@@ -33,7 +31,7 @@ describe('properties', function () {
   });
 
   describe('arrays should have the same length after round-tripping', function () {
-    var generator = t.arrayOf(t.int);
+    let generator = t.arrayOf(t.int);
     gentest.sample(generator, SAMPLE_SIZE).forEach(function (a) {
       it('should preserve length during round-trip of ' + JSON.stringify(a), function () {
         expect(decode(encode(a)).length).to.eql(a.length);
@@ -46,7 +44,7 @@ describe('properties', function () {
   }
 
   describe('non-negative integers should be encoded as uints', function () {
-    var generator = t.fmap(Math.abs, t.int);
+    let generator = t.fmap(Math.abs, t.int);
     gentest.sample(generator, SAMPLE_SIZE).forEach(function (a) {
       it('should encode ' + JSON.stringify(a) + ' as a uint', function () {
         expect(isUint(encode(a)[0])).to.be.true;
@@ -54,7 +52,7 @@ describe('properties', function () {
     });
   });
 
-  var letterGenerator = t.elements('abcdefghijklmnopqrstuvwxyz'.split(''));
+  let letterGenerator = t.elements('abcdefghijklmnopqrstuvwxyz'.split(''));
   function join(charArrayGen, str) {
     if (str == null) str = '';
     return t.fmap(charArray => charArray.join(str), charArrayGen);
@@ -71,8 +69,34 @@ describe('properties', function () {
     );
   }
 
+
+  // Note: this fails if s contains an unmatched surrogate half.
+  function encodeUtf8(s) {
+    let bytes = [];
+    let a = unescape(encodeURIComponent(s));
+    // a is an ascii representation of UTF-8 bytes
+    // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
+    for (let i = 0; i < a.length; ++i) {
+      bytes.push(a.charCodeAt(i));
+    }
+    return bytes;
+  }
+
+  it('should encode any char as utf8', function () {
+    let utf8CodePoint = t.suchThat(
+      x => x < 0xD800 || x > 0xDFFF,  // surrogate pair halves break
+      t.int.nonNegative);
+    let generator = t.fmap(
+      x => String.fromCodePoint(x),
+      utf8CodePoint
+    );
+    gentest.sample(generator, SAMPLE_SIZE).forEach(c => {
+      expect(encode(c).slice(1)).to.eql(encodeUtf8(c));
+    });
+  });
+
   describe('objects should round-trip', function () {
-    var generator =
+    let generator =
       t.shape({
         name: capitalise(join(nonEmptyArrayOf(letterGenerator))),
         limbs: t.fmap(x => x % 5, t.int.nonNegative),

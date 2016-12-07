@@ -1,13 +1,14 @@
-'use strict';
+import tags from './type-tags.js';
 
-var tags = require('./type-tags.js');
+/* globals ArrayBuffer, Uint8Array */
 
-var F8 = 0xFFFFFFFF;
-var F4 = 0xFFFF;
-var F2 = 0xFF;
+const F8 = 0xFFFFFFFF;
+const F4 = 0xFFFF;
+const F2 = 0xFF;
 
-var zeros23 = '00000000000000000000000';
-var keysetLUT, keysetList, stringHist, stringPlaceholders;
+const zeros23 = '00000000000000000000000';
+let keysetLUT, keysetList: Array<Array<string>>, stringHist, stringPlaceholders;
+
 
 function byteFromBools(bools, offset) {
   return bools[offset] << 7 |
@@ -31,8 +32,8 @@ function pushArrayElements(value, target) {
 }
 
 function encodeString(str, target, lut) {
-  var index;
-  if (lut && (index = lut.indexOf(str)) !== -1) {
+  let index = lut ? lut.indexOf(str) : -1;
+  if (index !== -1) {
     // Using indexOf knowing lut.length <= 255 so it's O(1)
     // todo: consider better ways to do this
     target.push(tags.STRREF, index);
@@ -40,15 +41,16 @@ function encodeString(str, target, lut) {
     // Note: this encoding fails if value contains an unmatched surrogate half.
     // utf8Ascii will be an ascii representation of UTF-8 bytes
     // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
-    var utf8Bytes = [];
-    var utf8Ascii = unescape(encodeURIComponent(str));
-    var containsNull = false;
-    for (var i = 0; i < utf8Ascii.length; ++i) {
+    let utf8Bytes = [];
+    // $FlowFixMe: flow doesn't know about unescape yet
+    let utf8Ascii = unescape(encodeURIComponent(str));
+    let containsNull = false;
+    for (let i = 0; i < utf8Ascii.length; ++i) {
       utf8Bytes.push(utf8Ascii.charCodeAt(i));
       if (utf8Bytes[i] === 0) containsNull = true;
     }
 
-    var numBytes = utf8Bytes.length;
+    let numBytes = utf8Bytes.length;
     if (numBytes < 32) {
       target.push(tags.STR5_BASE | numBytes);
     } else if (!containsNull) {
@@ -90,7 +92,7 @@ function encodeInteger(value, target) {
   } else if (value >= 0) {
     encodeUInt(value, target);
   } else {
-    var magnitude = -value;
+    let magnitude = -value;
     if (magnitude <= 15) {
       target.push(tags.NINT4_BASE | magnitude);
     } else if (magnitude <= F2) {
@@ -110,8 +112,8 @@ function encodeInteger(value, target) {
 
 function encodeDate(value, target) {
   // timestamp: same as int48, with unix timestamp in ms
-  var timestamp = Date.prototype.getTime.call(value);
-  var high = timestamp / 0x100000000;
+  let timestamp = Date.prototype.getTime.call(value);
+  let high = timestamp / 0x100000000;
   if (timestamp < 0) --high;
   target.push(tags.TIMESTAMP, (high >>> 8) & F2, high & F2);
   pushUInt32(timestamp >>> 0, target);
@@ -119,13 +121,13 @@ function encodeDate(value, target) {
 
 function encodeFloat(value, target) {
   // either float32 or double64, need to figure out which.
-  var negative = value < 0;
+  let negative = value < 0;
 
-  var exp;
-  var bits = (negative ? -value : value).toString(2);
-  var firstOne = bits.indexOf(1);
-  var lastOne = bits.lastIndexOf(1);
-  var dot = bits.indexOf('.');
+  let exp;
+  let bits = (negative ? -value : value).toString(2);
+  let firstOne = bits.indexOf('1');
+  let lastOne = bits.lastIndexOf('1');
+  let dot = bits.indexOf('.');
 
   if (dot === -1) {
     exp = bits.length - 1;
@@ -134,9 +136,9 @@ function encodeFloat(value, target) {
   } else {
     exp = dot - 1;
   }
-  var mantissa = bits.substring(firstOne + 1, lastOne + 1).replace('.', '');
+  let mantissa = bits.substring(firstOne + 1, lastOne + 1).replace('.', '');
 
-  if (mantissa.length <= 23 && (-126 <= exp && exp <= 127)) {
+  if (mantissa.length <= 23 && (exp >= -126 && exp <= 127)) {
     // yay it can fit in a float32
     exp += 127;
     if (negative) exp |= 0x100;
@@ -161,10 +163,10 @@ function encodeFloat(value, target) {
 }
 
 function findIndex(keys, table, list) {
-  var keyLengths = keys.map(function (key) {
+  let keyLengths = keys.map(function (key) {
     return key.length;
   }).join(',');
-  var keyConcats = keys.join('');
+  let keyConcats = keys.join('');
   if (!table[keyLengths]) {
     table[keyLengths] = {};
   }
@@ -189,8 +191,8 @@ function buildLUT(hist) {
   });
 }
 
-function encodeValue(value, target) {
-  var i, containsOnlyBooleans;
+function encodeValue(value: any, target: Array<number | string>) {
+  let containsOnlyBooleans;
   if (value === false) {
     target.push(tags.FALSE);
   } else if (value === true) {
@@ -228,7 +230,7 @@ function encodeValue(value, target) {
     encodeValue(value.byteLength, target);
     pushArrayElements(new Uint8Array(value), target);
   } else if (Array.isArray(value)) {
-    var numElements = value.length;
+    let numElements = value.length;
     containsOnlyBooleans = true;
 
     containsOnlyBooleans = value.every(function (element) {
@@ -244,7 +246,7 @@ function encodeValue(value, target) {
         target.push(tags.BARRAY_);
         encodeUInt(numElements, target);
       }
-      for (i = 0; i < numElements; i += 8) {
+      for (let i = 0; i < numElements; i += 8) {
         // note: there's some out of bounds going on here, but it works out like we want
         target.push(byteFromBools(value, i));
       }
@@ -261,9 +263,9 @@ function encodeValue(value, target) {
     }
   } else {
     // assumption: anything not in an earlier case can be treated as an object
-    var keys = Object.keys(value).sort();
-    var numKeys = keys.length;
-    var keysetIndex = findIndex(keys, keysetLUT, keysetList);
+    let keys: string[] = Object.keys(value).sort();
+    let numKeys = keys.length;
+    let keysetIndex = findIndex(keys, keysetLUT, keysetList);
 
     containsOnlyBooleans = keys.every(function (key) {
       return typeof value[key] === 'boolean';
@@ -273,9 +275,10 @@ function encodeValue(value, target) {
       target.push(tags.BMAP_);
       encodeUInt(keysetIndex, target);
 
-      var b = [0, 0, 0, 0, 0, 0, 0, 0];
-      for (i = 0; i < numKeys; i += 8) {
-        for (var j = 0; j < 8; ++j) {
+      let b = [0, 0, 0, 0, 0, 0, 0, 0];
+      for (let i = 0; i < numKeys; i += 8) {
+        for (let j = 0; j < 8; ++j) {
+          // $FlowFixMe: flow doesn't like our fancy hacks
           b[j] = i + j < numKeys && value[keys[i + j]];
         }
         target.push(byteFromBools(b, 0));
@@ -292,16 +295,17 @@ function encodeValue(value, target) {
   return target;
 }
 
-module.exports = function encode(value) {
-  var output = [];
+export default function encode(value: any): Array<number> {
+  // $FlowFixMe: output is filtered to Array<number> but hard for flow to track with our current level of annotations
+  let output: Array<number | string> = [];
   keysetLUT = {};
   keysetList = [];
   stringHist = {};
   stringPlaceholders = true;
 
-  var data = encodeValue(value, []);
-  var keysetData = encodeValue(keysetList, []);
-  var stringLUT = buildLUT(stringHist);
+  let data = encodeValue(value, []);
+  let keysetData = encodeValue(keysetList, []);
+  let stringLUT = buildLUT(stringHist);
 
   stringPlaceholders = false;
 
@@ -321,4 +325,4 @@ module.exports = function encode(value) {
   });
 
   return output;
-};
+}
