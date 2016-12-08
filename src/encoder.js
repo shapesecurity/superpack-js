@@ -225,7 +225,7 @@ function encodeValue(value: any, target: Array<number | string>) {
     }
   } else if ({}.toString.call(value) === '[object Date]') {
     encodeDate(value, target);
-  } else if (value instanceof ArrayBuffer) {
+  } else if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
     target.push(tags.BINARY_);
     encodeValue(value.byteLength, target);
     pushArrayElements(new Uint8Array(value), target);

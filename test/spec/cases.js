@@ -10,7 +10,7 @@ let littleEndian = (function () {
   return new Int16Array(buffer)[0] === 256;
 }());
 
-export default {
+let cases = {
   'basic values': [
     {
       value: false,
@@ -476,36 +476,6 @@ export default {
       desc: 'a 16-element bmap as bmap_'
     }
   ],
-  'binary data and typed arrays': [
-    {
-      value: new ArrayBuffer,
-      bytes: [types.BINARY_, types.UINT6_BASE | 0],
-      desc: 'an empty ArrayBuffer',
-    },
-    {
-      value: Uint8Array.of(0, 1, 2, 3).buffer,
-      bytes: [
-        types.BINARY_,
-        types.UINT6_BASE | 4,
-        0, 1, 2, 3,
-      ],
-      desc: 'a small ArrayBuffer',
-    },
-    {
-      value: Int32Array.of(1, 2, 3).buffer,
-      bytes:
-        littleEndian ? [
-          types.BINARY_,
-          types.UINT6_BASE | 12,
-          1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0,
-        ] : [
-          types.BINARY_,
-          types.UINT6_BASE | 12,
-          0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3,
-        ],
-      desc: 'a larger ArrayBuffer',
-    },
-  ],
   'dates': [
     {
       value: new Date(-1821292800000),
@@ -544,3 +514,38 @@ export default {
     },
   ],
 };
+
+if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && typeof Int32Array !== 'undefined') {
+  cases['binary data and typed arrays'] = [
+    {
+      value: new ArrayBuffer,
+      bytes: [types.BINARY_, types.UINT6_BASE | 0],
+      desc: 'an empty ArrayBuffer',
+    },
+    {
+      value: Uint8Array.of(0, 1, 2, 3).buffer,
+      bytes: [
+        types.BINARY_,
+        types.UINT6_BASE | 4,
+        0, 1, 2, 3,
+      ],
+      desc: 'a small ArrayBuffer',
+    },
+    {
+      value: Int32Array.of(1, 2, 3).buffer,
+      bytes:
+        littleEndian ? [
+          types.BINARY_,
+          types.UINT6_BASE | 12,
+          1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0,
+        ] : [
+          types.BINARY_,
+          types.UINT6_BASE | 12,
+          0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3,
+        ],
+      desc: 'a larger ArrayBuffer',
+    },
+  ];
+}
+
+export default cases;
