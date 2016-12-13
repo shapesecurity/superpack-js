@@ -42,7 +42,7 @@ let reconstructedValue = decode(payload);
 
 Browser testing by [BrowserStack](https://www.browserstack.com/).
 
-<img width="200px" src="./bs-logo.png" />
+<img width="30%" src="./bs-logo.png" />
 
 ## License
 
