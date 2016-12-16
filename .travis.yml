@@ -1,8 +1,13 @@
 sudo: false
 language: node_js
 script:
-  - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
-  - npm run test:ci
+- curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh |
+  bash
+- npm run test:ci
 node_js:
-  - "4"
-  - "6"
+- '4'
+- '6'
+env:
+  global:
+    - BROWSERSTACK_USERNAME=ninjaturtles1
+    - secure: rZtO8DrlZzOls6ydS68m0gIoxZAz7U3Wi3EjX8I3H1/lsWlxKlgRwtjb/YGoHwqPh/eEAEW0AMKKWAY2OZUU5R9BCgVy/q0OmcQ47lnr3hNQYkGgxEJRHoooOCe+/mpYFVCZldoSSmUU0RXv+JAnq5mQi53DJVsQNhPywLz1JLdc3kytDXoF6w6qE8Vc76fQVapVj9JnnqDRHn92KYSSVq3V1gFhmpkEFOfqBCd+7W9Ao4WiiknegQnaL9IBqg1vVzlOsSdgR+Gj55LZOBghjYDw8o+P9DNAxnUhTUQj/d+TPOfLwQ/KQdqL9/g6hwzbIIpZkJCqHkU4TO1zGs5TtoHOs8qS2O2pY4uKCpzZXaPDIIZOcOzftdqSSTZHL5/bXO2OZ32T4O68ff3KBN5clHcRGm82HFX5+cymWVl+MkpIiQnyaVNFzqw4WXnLo+vterwQr4FWLy1ROPaKBg4CaoA+Wm0qH/G8jgZeDpQmiPdlyaAZ9hfOg66slV9fH59ZOAgBAQeDGXp7pAM6LxUhNq0BWLBweXeowGZ8QbqYh1gXzfGx+8EW48lJ45AY8qfuQYXiCdmNZhHATIWtZbYATtJ5F7IUVnL9XkS1t9nyUUAzj8Lr5oyINIBRWBfEnCvbamHLJyorQsS9xO6dlebyqc9ari+TU5+D/u5YaPqm76I=

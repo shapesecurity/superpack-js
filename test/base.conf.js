@@ -5,7 +5,7 @@ let babelify = require('babelify');
 module.exports = {
   basePath: '',
 
-  frameworks: ['mocha', 'browserify'],
+  frameworks: ['mocha', 'expect', 'browserify'],
 
   files: ['spec/**/*.spec.js'],
 
@@ -15,7 +15,7 @@ module.exports = {
     debug: true,
     transform: [
       babelify.configure({
-        plugins: ['transform-es2015-modules-commonjs']
+        presets: ['es2015']
       })
     ]
   },
