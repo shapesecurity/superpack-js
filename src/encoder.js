@@ -9,7 +9,7 @@ const F2 = 0xFF;
 const zeros23 = '00000000000000000000000';
 let keysetLUT, keysetList: Array<Array<string>>, stringHist, stringPlaceholders;
 
-function isNaN(value) { // eslint-disable-line no-shadow
+function isANaNValue(value) { // eslint-disable-line no-shadow
   return value !== value; // eslint-disable-line no-self-compare
 }
 
@@ -210,7 +210,7 @@ function encodeValue(value: any, target: Array<number | string>) {
         target.push(tags.FLOAT32, 0x7F, 0x80, 0x00, 0x00);
       } else if (value === -Infinity) {
         target.push(tags.FLOAT32, F2, 0x80, 0x00, 0x00);
-      } else if (isNaN(value)) {
+      } else if (isANaNValue(value)) {
         target.push(tags.FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
       }
     } else if (Math.floor(value) === value && value < 0xFFFFFFFFFFFFFFFF) {
