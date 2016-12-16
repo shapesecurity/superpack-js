@@ -4,11 +4,46 @@ import types from '../../src/type-tags.js';
 
 /* globals ArrayBuffer, DataView, Int16Array */
 
-let littleEndian = (function () {
-  let buffer = new ArrayBuffer(2);
-  new DataView(buffer).setInt16(0, 256, true);
-  return new Int16Array(buffer)[0] === 256;
-}());
+function fill(O, value) {
+  let len = O.length >>> 0;
+
+  let start = arguments[2];
+  let relativeStart = start >> 0;
+
+  let k = relativeStart < 0 ?
+    Math.max(len + relativeStart, 0) :
+    Math.min(relativeStart, len);
+
+  let end = arguments[3];
+  let relativeEnd = end === void 0 ?
+    len : end >> 0;
+
+  let final = relativeEnd < 0 ?
+    Math.max(len + relativeEnd, 0) :
+    Math.min(relativeEnd, len);
+
+  while (k < final) {
+    O[k] = value;
+    k++;
+  }
+
+  return O;
+}
+
+function repeat(str, count) {
+  let rpt = '';
+  for (;;) {
+    if ((count & 1) === 1) {
+      rpt += str;
+    }
+    count >>>= 1;
+    if (count === 0) {
+      break;
+    }
+    str += str;
+  }
+  return rpt;
+}
 
 let cases = {
   'basic values': [
@@ -263,42 +298,42 @@ let cases = {
       desc: 'null byte string as str5'
     },
     {
-      value: 'a'.repeat(32),
-      bytes: [types.CSTRING].concat(Array(32).fill(97)).concat([0]),
+      value: repeat('a', 32),
+      bytes: [types.CSTRING].concat(fill(Array(32), 97)).concat([0]),
       desc: '32-char null-byte-free string as cstring'
     },
     {
-      value: 'a'.repeat(31) + '\u0000',
-      bytes: [types.STR8, 32].concat(Array(31).fill(97)).concat([0]),
+      value: repeat('a', 31) + '\u0000',
+      bytes: [types.STR8, 32].concat(fill(Array(31), 97)).concat([0]),
       desc: '32-char null-byte-containing string as str8'
     },
     {
-      value: 'a'.repeat(256),
-      bytes: [types.CSTRING].concat(Array(256).fill(97)).concat([0]),
+      value: repeat('a', 256),
+      bytes: [types.CSTRING].concat(fill(Array(256), 97)).concat([0]),
       desc: '256-char null-byte-free string as cstring'
     },
     {
-      value: 'a'.repeat(255) + '\u0000',
-      bytes: [types.STR_, types.UINT14_BASE | 1, 0x00].concat(Array(255).fill(97)).concat([0]),
+      value: repeat('a', 255) + '\u0000',
+      bytes: [types.STR_, types.UINT14_BASE | 1, 0x00].concat(fill(Array(255), 97)).concat([0]),
       desc: '256-char null-byte-containing string as str_'
     },
     {
-      value: 'a'.repeat(65534) + '\u0000',
-      bytes: [types.STR_, 0xE4, 0xFF, 0xFF].concat(Array(65534).fill(97)).concat([0]),
+      value: repeat('a', 65534) + '\u0000',
+      bytes: [types.STR_, 0xE4, 0xFF, 0xFF].concat(fill(Array(65534), 97)).concat([0]),
       desc: '65535-char null-byte-containing string as str_'
     },
     {
-      value: 'a'.repeat(65536),
-      bytes: [types.CSTRING].concat(Array(65536).fill(97)).concat([0]),
+      value: repeat('a', 65536),
+      bytes: [types.CSTRING].concat(fill(Array(65536), 97)).concat([0]),
       desc: '65536-char null-byte-free string as cstring'
     },
     {
-      value: 'a'.repeat(65535) + '\u0000',
-      bytes: [types.STR_, 0xE5, 0x01, 0x00, 0x00].concat(Array(65535).fill(97)).concat([0]),
+      value: repeat('a', 65535) + '\u0000',
+      bytes: [types.STR_, 0xE5, 0x01, 0x00, 0x00].concat(fill(Array(65535), 97)).concat([0]),
       desc: '65536-char null-byte-containing string as str_'
     },
     // {
-    //   value: 'a'.repeat(250000),
+    //   value: repeat('a', 250000),
     //   bytes: [types.CSTRING].concat(Array(250000).fill(97)).concat([0]),
     //   desc: '250000-char null-byte-free string as cstring'
     // }
@@ -516,6 +551,13 @@ let cases = {
 };
 
 if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && typeof Int32Array !== 'undefined') {
+
+  let littleEndian = (function () {
+    let buffer = new ArrayBuffer(2);
+    new DataView(buffer).setInt16(0, 256, true);
+    return new Int16Array(buffer)[0] === 256;
+  }());
+
   cases['binary data and typed arrays'] = [
     {
       value: new ArrayBuffer,
@@ -523,7 +565,7 @@ if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && t
       desc: 'an empty ArrayBuffer',
     },
     {
-      value: Uint8Array.of(0, 1, 2, 3).buffer,
+      value: new Uint8Array([0, 1, 2, 3]).buffer,
       bytes: [
         types.BINARY_,
         types.UINT6_BASE | 4,
@@ -532,7 +574,7 @@ if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && t
       desc: 'a small ArrayBuffer',
     },
     {
-      value: Int32Array.of(1, 2, 3).buffer,
+      value: new Int32Array([1, 2, 3]).buffer,
       bytes:
         littleEndian ? [
           types.BINARY_,
