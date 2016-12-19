@@ -65,8 +65,14 @@ function encodeString(str, target, lut) {
       target.push(tags.STR_);
       encodeUInt(numBytes, target);
     }
-    // todo: find way around blowing callstack with huge strings
-    target.push.apply(target, utf8Bytes);
+    const APPLY_CHUNK_SIZE = 0xFFFF;
+    if (utf8Bytes.length > APPLY_CHUNK_SIZE) {
+      for (let i = 0; i < utf8Bytes.length; i += APPLY_CHUNK_SIZE) {
+        [].push.apply(target, utf8Bytes.slice(i, i + APPLY_CHUNK_SIZE));
+      }
+    } else {
+      [].push.apply(target, utf8Bytes);
+    }
   }
 }
 
