@@ -157,9 +157,9 @@ let cases = {
       desc: '2**52-1 as uint64'
     },
     {
-      value: 0xFFFFFFFFFFFFFBFF,
+      value: 0xFFFFFFFFFFFFF800,
       bytes: [types.UINT64, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF8, 0x00],
-      desc: '0xFFFFFFFFFFFFFBFF as imprecise uint64'
+      desc: 'largest uint64 representable as double'
     }
   ],
   'negative integers': [
@@ -209,9 +209,9 @@ let cases = {
       desc: '-(2**52-1) as nint64'
     },
     {
-      value: -0xFFFFFFFFFFFFFBFF,
+      value: -0xFFFFFFFFFFFFF800,
       bytes: [types.NINT64, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xF8, 0x00],
-      desc: '-0xFFFFFFFFFFFFFBFF as imprecise nint64'
+      desc: 'largest magnitude nint64 representable as double'
     }
   ],
   'floats and doubles': [
