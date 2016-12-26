@@ -38,34 +38,36 @@ function readUInt32(buf) {
   return buf[ptr++] * 0x1000000 + (buf[ptr++] << 16 | buf[ptr++] << 8 | buf[ptr++]);
 }
 
-function readFloat(buf, isDouble) {
-  let mantissaLen = isDouble ? 52 : 23;
-  let mixBits = isDouble ? 4 : 1;
-  let expMax = (1 << (isDouble ? 11 : 8)) - 1;
+function readFloat(buf, eBits, mBits) {
+  let bias = (1 << (eBits - 1)) - 1;
+  let byteLength = (eBits + mBits + 1) / 8;
 
-  // Read sign, exponent, and beginning of mantissa from first two bytes
-  let sign = buf[ptr] >> 7 ? -1 : 1;
-  let exp = (buf[ptr++] & 127) << mixBits | (buf[ptr] >> (8 - mixBits));
-  let mantissa = buf[ptr++] & (255 >> mixBits);
+  let bytes = buf.slice(ptr, ptr + byteLength).reverse();
+  ptr += byteLength;
 
-  // Read rest of mantissa, either 2 or 6 more bytes
-  // $FlowFixMe: shouldn't be doing math on bools
-  for (let end = ptr + 2 + 4 * isDouble; ptr < end;) {
-    mantissa = mantissa * 256 + buf[ptr++];
+  // read sign, exponent, and beginning of mantissa from first two bytes
+  let sign = (bytes[0] >>> 7) > 0 ? -1 : 1;
+  let leadingBytes = (bytes[0] << 8) | bytes[1];
+  let leadingMBits = 16 - (eBits + 1);
+  let exp = (leadingBytes >>> leadingMBits) & ((1 << eBits) - 1);
+  let mantissa = leadingBytes & ((1 << leadingMBits) - 1);
+
+  // read remainder of mantissa
+  for (let i = 2; i < byteLength; ++i) {
+    mantissa = mantissa * 256 + bytes[i];
   }
 
-  if (exp === expMax) {
-    return mantissa ? NaN : sign * Infinity;
-  } else if (exp === 0) {
-    // Subnormal, so don't add leading 1 to mantissa, but interpret exponent as if it were 1
-    exp = 1 - (expMax >> 1);
-  } else {
-    // Add leading 1 to mantissa, subtract offset from exponent to get range -126 to +127
-    mantissa += Math.pow(2, mantissaLen);
-    exp -= expMax >> 1;
+  if (exp === (1 << eBits) - 1) {
+    // NaN and +/- Infinity
+    return (mantissa === 0 ? sign : 0) / 0;
+  } else if (exp > 0) {
+    // normal
+    return sign * Math.pow(2, exp - bias) * (1 + mantissa / Math.pow(2, mBits));
+  } else if (mantissa !== 0) {
+    // subnormal
+    return sign * Math.pow(2, -(bias - 1)) * (mantissa / Math.pow(2, mBits));
   }
-
-  return sign * mantissa * Math.pow(2, exp - mantissaLen);
+  return sign * 0;
 }
 
 function readString(buf, length: number) {
@@ -134,9 +136,9 @@ function decodeValue(buf): any {
     case tags.NINT64:
       return -(readUInt32(buf) * 0x100000000 + readUInt32(buf));
     case tags.FLOAT32:
-      return readFloat(buf, false);
+      return readFloat(buf, 8, 23);
     case tags.DOUBLE64:
-      return readFloat(buf, true);
+      return readFloat(buf, 11, 52);
 
     case tags.TIMESTAMP:
       return new Date(

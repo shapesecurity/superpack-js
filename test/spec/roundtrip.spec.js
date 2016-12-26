@@ -1,9 +1,12 @@
 'use strict';
 
+/* global Float32Array Float64Array Uint32Array */
+
 import { expect } from 'chai';
 
 import encode from '../../src/encoder';
 import decode from '../../src/decoder';
+import types from '../../src/type-tags';
 
 let originalData =
   // eslint-disable-next-line
@@ -15,5 +18,81 @@ describe('sample payload roundtrips', function () {
     let decoded = decode(encoded);
     expect(originalData).to.eql(decoded);
     expect(JSON.stringify(originalData).length).to.be.equal(JSON.stringify(decoded).length);
+  });
+});
+
+function showBits(n, width) {
+  if (width < 0) return '';
+  let bits = n.toString(2);
+  width -= bits.length;
+  let zeroes = '';
+  while (width > 0) {
+    zeroes += '0';
+    --width;
+  }
+  return zeroes + bits;
+}
+
+describe('floating point values', function () {
+  describe('single-precision (binary32)', function () {
+    let upperBound = Math.pow(2, 32);
+    let step = 7654321;
+    for (let i = 0; i < upperBound; i += Math.floor(Math.random() * step)) {
+      let n = new Float32Array(Uint32Array.of(i).buffer)[0];
+      if (!isFinite(n)) continue;
+      let m = Math.abs(n);
+      if (Math.floor(m) === m && m < Math.pow(2, 64)) continue;
+      let actualBits = showBits(new Uint32Array(Float32Array.of(n).buffer)[0], 32);
+
+      let encoded = encode(n);
+
+      it(`should properly encode ${n} (${actualBits})`, function () {
+        expect(encoded[0]).to.be.equal(types.FLOAT32);
+        expect(encoded.length).to.be.equal(5);
+        let encodedBits = showBits(new Uint32Array(Uint8Array.of(encoded[1], encoded[2], encoded[3], encoded[4]).buffer)[0], 32);
+        expect(encodedBits).to.be.equal(actualBits);
+      });
+
+      let decoded = decode(encoded);
+      let doubleEncoded = encode(decoded);
+      it(`should round-trip ${n} (${actualBits})`, function () {
+        let doubleEncodedBits = showBits(new Uint32Array(Uint8Array.of(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]).buffer)[0], 32);
+        expect(doubleEncodedBits).to.be.equal(actualBits);
+        expect(n).to.be.equal(decoded);
+      });
+    }
+  });
+
+  describe('double-precision (binary64)', function () {
+    let upperBound = Math.pow(2, 32);
+    let step = 7654321;
+    for (let high = 0; high < upperBound; high += Math.floor(Math.random() * step)) {
+      let low = Math.floor(Math.random() * upperBound);
+      let n = new Float64Array(Uint32Array.of(low, high).buffer)[0];
+      if (!isFinite(n)) continue;
+      let m = Math.abs(n);
+      if (Math.floor(m) === m && m < Math.pow(2, 64)) continue;
+      let actualBits = showBits(high, 32) + showBits(low, 32);
+
+      let encoded = encode(n);
+      if (encoded[0] === types.FLOAT32) continue;
+
+      it(`should properly encode ${n} (${actualBits})`, function () {
+        expect(encoded[0]).to.be.equal(types.DOUBLE64);
+        expect(encoded.length).to.be.equal(9);
+        let [l, h] = new Uint32Array(Uint8Array.of(encoded[1], encoded[2], encoded[3], encoded[4], encoded[5], encoded[6], encoded[7], encoded[8]).buffer);
+        let encodedBits = showBits(h, 32) + showBits(l, 32);
+        expect(encodedBits).to.be.equal(actualBits);
+      });
+
+      let decoded = decode(encoded);
+      let doubleEncoded = encode(decoded);
+      it(`should round-trip ${n} (${actualBits})`, function () {
+        let [l, h] = new Uint32Array(Uint8Array.of(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4], doubleEncoded[5], doubleEncoded[6], doubleEncoded[7], doubleEncoded[8]).buffer);
+        let doubleEncodedBits = showBits(h, 32) + showBits(l, 32);
+        expect(doubleEncodedBits).to.be.equal(actualBits);
+        expect(n).to.be.equal(decoded);
+      });
+    }
   });
 });
