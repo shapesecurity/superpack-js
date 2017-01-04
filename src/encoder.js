@@ -2,11 +2,11 @@ import tags from './type-tags.js';
 
 /* globals ArrayBuffer, Uint8Array */
 
+const F16 = 0xFFFFFFFFFFFFFFFF;
 const F8 = 0xFFFFFFFF;
 const F4 = 0xFFFF;
 const F2 = 0xFF;
 
-const zeros23 = '00000000000000000000000';
 let keysetLUT, keysetList: Array<Array<string>>, stringHist, stringPlaceholders;
 
 function isANaNValue(value) { // eslint-disable-line no-shadow
@@ -128,46 +128,87 @@ function encodeDate(value, target) {
   pushUInt32(timestamp >>> 0, target);
 }
 
-function encodeFloat(value, target) {
-  // either float32 or double64, need to figure out which.
-  let negative = value < 0;
+function roundToEven(n) {
+  let w = Math.floor(n), f = n - w;
+  if (f < 0.5) return w;
+  if (f > 0.5) return w + 1;
+  return w % 2 ? w + 1 : w;
+}
 
-  let exp;
-  let bits = (negative ? -value : value).toString(2);
-  let firstOne = bits.indexOf('1');
-  let lastOne = bits.lastIndexOf('1');
-  let dot = bits.indexOf('.');
+function encodeFloat(value: number, target) {
+  // eBits + mBits + 1 is a multiple of 8
+  let eBits = 11;
+  let mBits = 52;
+  let bias = (1 << (eBits - 1)) - 1;
 
-  if (dot === -1) {
-    exp = bits.length - 1;
-  } else if (dot < firstOne) {
-    exp = dot - firstOne;
+  let isNegative = value < 0;
+  let v = Math.abs(value);
+
+  let exp, mantissa;
+  if (v >= Math.pow(2, 1 - bias)) {
+    // normal
+    exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
+    let significand = v / Math.pow(2, exp);
+    if (significand < 1) {
+      exp -= 1;
+      significand *= 2;
+    }
+    if (significand >= 2) {
+      exp += 1;
+      significand /= 2;
+    }
+    let mMax = Math.pow(2, mBits);
+    mantissa = roundToEven(significand * mMax) - mMax;
+    exp += bias;
+    if (mantissa / mMax >= 1) {
+      exp += 1;
+      mantissa = 0;
+    }
+    if (exp > 2 * bias) {
+      // overflow
+      exp = (1 << eBits) - 1;
+      mantissa = 0;
+    }
   } else {
-    exp = dot - 1;
+    // subnormal
+    exp = 0;
+    mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
   }
-  let mantissa = bits.substring(firstOne + 1, lastOne + 1).replace('.', '');
 
-  if (mantissa.length <= 23 && (exp >= -126 && exp <= 127)) {
-    // yay it can fit in a float32
-    exp += 127;
-    if (negative) exp |= 0x100;
-    mantissa = parseInt(mantissa + zeros23.slice(mantissa.length), 2);
-    target.push(tags.FLOAT32);
-    pushUInt32(mantissa | (exp << 23), target);
-  } else {
-    // need to use double64
-    exp += 1023;
-    if (negative) exp |= 0x800;
+  let tag = tags.DOUBLE64;
 
-    mantissa = parseInt(mantissa.length > 52 ?
-      mantissa.slice(0, 52) :
-      mantissa + (zeros23 + zeros23 + '000000').slice(mantissa.length),
-      2
-    );
+  // see if this can be represented using a FLOAT32 without dropping any significant bits
+  if ((mantissa & 0x1FFFFFFF) === 0 && Math.abs(exp - bias) < 256) {
+    tag = tags.FLOAT32;
+    eBits = 8;
+    mBits = 23;
+    mantissa /= 0x1FFFFFFF;
+    exp += bias;
+    bias = (1 << (eBits - 1)) - 1;
+    exp -= bias;
+    if (v < Math.pow(2, 1 - bias)) {
+      // subnormal
+      exp = 0;
+      mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
+    }
+  }
 
-    target.push(tags.DOUBLE64);
-    pushUInt32(((mantissa / 0x100000000) & 0xFFFFF) | (exp << 20), target);
-    pushUInt32(mantissa & F8, target);
+  // align sign, exponent, mantissa
+  let bits = [];
+  for (let i = mBits - 1; i >= 0; --i) {
+    bits.unshift(mantissa & 1);
+    mantissa = Math.floor(mantissa / 2);
+  }
+  for (let i = eBits; i > 0; i -= 1) {
+    bits.unshift(exp & 1);
+    exp = Math.floor(exp / 2);
+  }
+  bits.unshift(isNegative ? 1 : 0);
+
+  target.push(tag);
+  // pack into bytes
+  for (let i = bits.length - 8; i >= 0; i -= 8) {
+    target.push(byteFromBools(bits, i));
   }
 }
 
@@ -211,18 +252,19 @@ function encodeValue(value: any, target: Array<number | string>) {
   } else if (typeof value === 'undefined') {
     target.push(tags.UNDEFINED);
   } else if (typeof value === 'number') {
-    if (!isFinite(value)) {
-      if (value === Infinity) {
-        target.push(tags.FLOAT32, 0x7F, 0x80, 0x00, 0x00);
-      } else if (value === -Infinity) {
-        target.push(tags.FLOAT32, F2, 0x80, 0x00, 0x00);
-      } else if (isANaNValue(value)) {
-        target.push(tags.FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
+    if (isFinite(value)) {
+      let v = Math.abs(value);
+      if (Math.floor(v) === v && v < F16) {
+        encodeInteger(value, target);
+      } else {
+        encodeFloat(value, target);
       }
-    } else if (Math.floor(value) === value && value < 0xFFFFFFFFFFFFFFFF) {
-      encodeInteger(value, target);
-    } else {
-      encodeFloat(value, target);
+    } else if (value === 1 / 0) {
+      target.push(tags.FLOAT32, 0x00, 0x00, 0x80, 0x7F);
+    } else if (value === -1 / 0) {
+      target.push(tags.FLOAT32, 0x00, 0x00, 0x80, 0xFF);
+    } else if (isANaNValue(value)) {
+      target.push(tags.FLOAT32, 0x00, 0x00, 0xC0, 0x7F);
     }
   } else if (typeof value === 'string') {
     // Push the string itself for handling later
