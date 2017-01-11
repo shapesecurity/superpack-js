@@ -153,9 +153,13 @@ function decodeValue(buf): any {
 
     case tags.BINARY_: {
       let length: number = decodeValue(buf);
-      let out = Uint8Array.from(buf.slice(ptr, length)).buffer;
+      // alternative to Uint8Array.from(...) for old browsers
+      let out = new Uint8Array;
+      for (let i = 0; i < length; ++i) {
+        out[i] = buf[ptr + i];
+      }
       ptr += length;
-      return out;
+      return out.buffer;
     }
 
     case tags.CSTRING: {

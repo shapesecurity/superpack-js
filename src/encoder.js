@@ -29,7 +29,7 @@ function pushUInt32(n, target) {
 }
 
 function pushArrayElements(value, target) {
-  value.forEach(function (element) {
+  [].forEach.call(value, function (element) {
     encodeValue(element, target);
   });
 }
