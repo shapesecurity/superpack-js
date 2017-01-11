@@ -13,8 +13,8 @@ module.exports = function (config) {
     reporters: ['mocha'],
     browsers: [
       'bs_sierra_safari10',
-      // 'bs_win7_ie9',
-      // 'bs_android_samsunggal44'
+      'bs_win7_ie9',
+      'bs_android_samsunggal44',
       'bs_win10_edge14',
       'bs_win10_ff50',
       'bs_win10_chrome55',
