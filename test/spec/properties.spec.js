@@ -82,12 +82,19 @@ describe('properties', function () {
     return bytes;
   }
 
+  function fromCodePoint(cp) {
+    if (cp <= 0xFFFF) return String.fromCharCode(cp);
+    let cu1 = String.fromCharCode(Math.floor((cp - 0x10000) / 0x400) + 0xD800);
+    let cu2 = String.fromCharCode(((cp - 0x10000) % 0x400) + 0xDC00);
+    return cu1 + cu2;
+  }
+
   it('should encode any char as utf8', function () {
     let utf8CodePoint = t.suchThat(
       x => x < 0xD800 || x > 0xDFFF,  // surrogate pair halves break
       t.int.nonNegative);
     let generator = t.fmap(
-      x => String.fromCodePoint(x),
+      x => fromCodePoint(x),
       utf8CodePoint
     );
     gentest.sample(generator, SAMPLE_SIZE).forEach(c => {
