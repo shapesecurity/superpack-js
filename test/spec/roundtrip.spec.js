@@ -35,7 +35,7 @@ function showBits(n, width) {
 }
 
 function toUint32(a, b, c, d) {
-  return (d * Math.pow(2, 24)) + (c << 16) + (b << 8) + a;
+  return (a * Math.pow(2, 24)) + (b << 16) + (c << 8) + d;
 }
 
 describe('floating point values', function () {
@@ -73,8 +73,8 @@ describe('floating point values', function () {
       it(`should properly encode ${n} (${actualBits})`, function () {
         expect(encoded[0]).to.be.equal(types.DOUBLE64);
         expect(encoded.length).to.be.equal(9);
-        let l = toUint32(encoded[1], encoded[2], encoded[3], encoded[4]);
-        let h = toUint32(encoded[5], encoded[6], encoded[7], encoded[8]);
+        let h = toUint32(encoded[1], encoded[2], encoded[3], encoded[4]);
+        let l = toUint32(encoded[5], encoded[6], encoded[7], encoded[8]);
         let encodedBits = `${showBits(h, 32)}${showBits(l, 32)}`;
         expect(encodedBits).to.be.equal(actualBits);
       });
@@ -82,8 +82,8 @@ describe('floating point values', function () {
       let decoded = decode(encoded);
       let doubleEncoded = encode(decoded);
       it(`should round-trip ${n} (${actualBits})`, function () {
-        let l = toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]);
-        let h = toUint32(doubleEncoded[5], doubleEncoded[6], doubleEncoded[7], doubleEncoded[8]);
+        let h = toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]);
+        let l = toUint32(doubleEncoded[5], doubleEncoded[6], doubleEncoded[7], doubleEncoded[8]);
         let doubleEncodedBits = `${showBits(h, 32)}${showBits(l, 32)}`;
         expect(doubleEncodedBits).to.be.equal(actualBits);
         expect(n).to.be.equal(decoded);

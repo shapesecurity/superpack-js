@@ -42,7 +42,7 @@ function readFloat(buf, eBits, mBits) {
   let bias = (1 << (eBits - 1)) - 1;
   let byteLength = (eBits + mBits + 1) / 8;
 
-  let bytes = buf.slice(ptr, ptr + byteLength).reverse();
+  let bytes = buf.slice(ptr, ptr + byteLength);
   ptr += byteLength;
 
   // read sign, exponent, and beginning of mantissa from first two bytes

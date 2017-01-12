@@ -207,7 +207,7 @@ function encodeFloat(value: number, target) {
 
   target.push(tag);
   // pack into bytes
-  for (let i = bits.length - 8; i >= 0; i -= 8) {
+  for (let i = 0; i < bits.length; i += 8) {
     target.push(byteFromBools(bits, i));
   }
 }
@@ -260,11 +260,11 @@ function encodeValue(value: any, target: Array<number | string>) {
         encodeFloat(value, target);
       }
     } else if (value === 1 / 0) {
-      target.push(tags.FLOAT32, 0x00, 0x00, 0x80, 0x7F);
+      target.push(tags.FLOAT32, 0x7F, 0x80, 0x00, 0x00);
     } else if (value === -1 / 0) {
-      target.push(tags.FLOAT32, 0x00, 0x00, 0x80, 0xFF);
+      target.push(tags.FLOAT32, 0xFF, 0x80, 0x00, 0x00);
     } else if (isANaNValue(value)) {
-      target.push(tags.FLOAT32, 0x00, 0x00, 0xC0, 0x7F);
+      target.push(tags.FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
     }
   } else if (typeof value === 'string') {
     // Push the string itself for handling later
