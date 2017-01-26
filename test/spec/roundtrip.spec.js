@@ -68,9 +68,6 @@ describe('floating point values', function () {
       let encoded = encode(n);
       if (encoded[0] === types.FLOAT32) return;
 
-      // TODO: ChakraCore bug: https://github.com/Microsoft/ChakraCore/issues/2353
-      if (/^.0{12,}/.test(actualBits) && Math.pow(2, -1074) === 0) return;
-
       it(`should properly encode ${n} (${actualBits})`, function () {
         expect(encoded[0]).to.be.equal(types.DOUBLE64);
         expect(encoded.length).to.be.equal(9);
