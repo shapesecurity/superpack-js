@@ -135,81 +135,101 @@ function roundToEven(n) {
   return w % 2 ? w + 1 : w;
 }
 
-function encodeFloat(value: number, target) {
-  // eBits + mBits + 1 is a multiple of 8
-  let eBits = 11;
-  let mBits = 52;
-  let bias = (1 << (eBits - 1)) - 1;
-
-  let isNegative = value < 0;
-  let v = Math.abs(value);
-
-  let exp, mantissa;
-  if (v >= Math.pow(2, 1 - bias)) {
-    // normal
-    exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
-    let significand = v / Math.pow(2, exp);
-    if (significand < 1) {
-      exp -= 1;
-      significand *= 2;
+let encodeFloat;
+/* global Float32Array Float64Array */
+if (typeof Float32Array === 'function' && typeof Float64Array === 'function' && typeof Uint8Array === 'function') {
+  encodeFloat = function (value: number, target) {
+    let tag = tags.FLOAT32;
+    let f = new Float32Array;
+    f[0] = value;
+    if (f[0] !== value) {
+      tag = tags.DOUBLE64;
+      f = new Float64Array;
+      f[0] = value;
     }
-    if (significand >= 2) {
-      exp += 1;
-      significand /= 2;
+    let u = new Uint8Array(f.buffer);
+    target.push(tag);
+    for (let i = u.length - 1; i >= 0; --i) {
+      target.push(u[i]);
     }
-    let mMax = Math.pow(2, mBits);
-    mantissa = roundToEven(significand * mMax) - mMax;
-    exp += bias;
-    if (mantissa / mMax >= 1) {
-      exp += 1;
-      mantissa = 0;
-    }
-    if (exp > 2 * bias) {
-      // overflow
-      exp = (1 << eBits) - 1;
-      mantissa = 0;
-    }
-  } else {
-    // subnormal
-    exp = 0;
-    mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
-  }
+  };
+} else {
+  encodeFloat = function (value: number, target) {
+    // eBits + mBits + 1 is a multiple of 8
+    let eBits = 11;
+    let mBits = 52;
+    let bias = (1 << (eBits - 1)) - 1;
 
-  let tag = tags.DOUBLE64;
+    let isNegative = value < 0;
+    let v = Math.abs(value);
 
-  // see if this can be represented using a FLOAT32 without dropping any significant bits
-  if ((mantissa & 0x1FFFFFFF) === 0 && Math.abs(exp - bias) < 256) {
-    tag = tags.FLOAT32;
-    eBits = 8;
-    mBits = 23;
-    mantissa /= 0x1FFFFFFF;
-    exp += bias;
-    bias = (1 << (eBits - 1)) - 1;
-    exp -= bias;
-    if (v < Math.pow(2, 1 - bias)) {
+    let exp, mantissa;
+    if (v >= Math.pow(2, 1 - bias)) {
+      // normal
+      exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
+      let significand = v / Math.pow(2, exp);
+      if (significand < 1) {
+        exp -= 1;
+        significand *= 2;
+      }
+      if (significand >= 2) {
+        exp += 1;
+        significand /= 2;
+      }
+      let mMax = Math.pow(2, mBits);
+      mantissa = roundToEven(significand * mMax) - mMax;
+      exp += bias;
+      if (mantissa / mMax >= 1) {
+        exp += 1;
+        mantissa = 0;
+      }
+      if (exp > 2 * bias) {
+        // overflow
+        exp = (1 << eBits) - 1;
+        mantissa = 0;
+      }
+    } else {
       // subnormal
       exp = 0;
       mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
     }
-  }
 
-  // align sign, exponent, mantissa
-  let bits = [];
-  for (let i = mBits - 1; i >= 0; --i) {
-    bits.unshift(mantissa & 1);
-    mantissa = Math.floor(mantissa / 2);
-  }
-  for (let i = eBits; i > 0; i -= 1) {
-    bits.unshift(exp & 1);
-    exp = Math.floor(exp / 2);
-  }
-  bits.unshift(isNegative ? 1 : 0);
+    let tag = tags.DOUBLE64;
 
-  target.push(tag);
-  // pack into bytes
-  for (let i = 0; i < bits.length; i += 8) {
-    target.push(byteFromBools(bits, i));
-  }
+    // see if this can be represented using a FLOAT32 without dropping any significant bits
+    if ((mantissa & 0x1FFFFFFF) === 0 && Math.abs(exp - bias) < 256) {
+      tag = tags.FLOAT32;
+      eBits = 8;
+      mBits = 23;
+      mantissa /= 0x1FFFFFFF;
+      exp += bias;
+      bias = (1 << (eBits - 1)) - 1;
+      exp -= bias;
+      if (v < Math.pow(2, 1 - bias)) {
+        // subnormal
+        exp = 0;
+        mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
+      }
+    }
+
+    // align sign, exponent, mantissa
+    let bits = [];
+    for (let i = mBits - 1; i >= 0; --i) {
+      bits.unshift(mantissa & 1);
+      mantissa = Math.floor(mantissa / 2);
+    }
+    for (let i = eBits; i > 0; i -= 1) {
+      bits.unshift(exp & 1);
+      exp = Math.floor(exp / 2);
+    }
+    bits.unshift(isNegative ? 1 : 0);
+
+    target.push(tag);
+    // pack into bytes
+    for (let i = 0; i < bits.length; i += 8) {
+      target.push(byteFromBools(bits, i));
+    }
+  };
 }
 
 function findIndex(keys, table, list) {
