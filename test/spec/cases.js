@@ -440,6 +440,61 @@ let cases = {
         types.STR5_BASE | 1, 101,
       ],
       desc: 'a nested map'
+    },
+    {
+      value: { a: 'b', c: { d: 'e' } },
+      keysetsToOmit: [],
+      bytes: [
+        types.STRLUT, 0,
+        types.ARRAY5_BASE | 2,
+        types.ARRAY5_BASE | 2,
+        types.STR5_BASE | 1, 97,
+        types.STR5_BASE | 1, 99,
+        types.ARRAY5_BASE | 1,
+        types.STR5_BASE | 1, 100,
+        types.MAP_, 0,
+        types.STR5_BASE | 1, 98,
+        types.MAP_, 1,
+        types.STR5_BASE | 1, 101,
+      ],
+      desc: 'a nested map'
+    },
+    {
+      value: { a: 'b', c: { d: 'e' } },
+      keysetsToOmit: [['a', 'c'], ['d']],
+      bytes: [
+        types.MAP_, 0,
+        types.STR5_BASE | 1, 98,
+        types.MAP_, 1,
+        types.STR5_BASE | 1, 101,
+      ],
+      desc: 'a nested map with omitted keysets'
+    },
+    {
+      value: { a: 'b', c: { d: 'e' } },
+      keysetsToOmit: [['a', 'c'], ['d'], ['f', 'g']],
+      bytes: [
+        types.MAP_, 0,
+        types.STR5_BASE | 1, 98,
+        types.MAP_, 1,
+        types.STR5_BASE | 1, 101,
+      ],
+      desc: 'a nested map with a superset of omitted keysets'
+    },
+    {
+      value: { a: 'b', c: { d: 'e' } },
+      keysetsToOmit: [['a', 'c']],
+      bytes: [
+        types.STRLUT, 0,
+        types.ARRAY5_BASE | 1,
+        types.ARRAY5_BASE | 1,
+        types.STR5_BASE | 1, 100,
+        types.MAP_, 0,
+        types.STR5_BASE | 1, 98,
+        types.MAP_, 1,
+        types.STR5_BASE | 1, 101,
+      ],
+      desc: 'a nested map with a subset of omitted keysets'
     }
   ],
   'bmaps': [
