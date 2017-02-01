@@ -7,7 +7,7 @@ const F8 = 0xFFFFFFFF;
 const F4 = 0xFFFF;
 const F2 = 0xFF;
 
-let keysetLUT, keysetList: Array<Array<string>>, stringHist, stringPlaceholders;
+let keysetList: Array<Array<string>>, stringHist, stringPlaceholders;
 
 function isANaNValue(value) { // eslint-disable-line no-shadow
   return value !== value; // eslint-disable-line no-self-compare
@@ -212,19 +212,13 @@ function encodeFloat(value: number, target) {
   }
 }
 
-function findIndex(keys, table, list) {
-  let keyLengths = keys.map(function (key) {
-    return key.length;
-  }).join(',');
-  let keyConcats = keys.join('');
-  if (!table[keyLengths]) {
-    table[keyLengths] = {};
+// WARN: keys are sorted
+function findKeysetIndex(keys, list) {
+  let index = findIndex(list, a => isSortedArrayOfThingsSameAsSortedArrayOfThings(a, keys));
+  if (index < 0) {
+    return list.push(keys) - 1;
   }
-  if (typeof table[keyLengths][keyConcats] !== 'number') {
-    table[keyLengths][keyConcats] = list.length;
-    list.push(keys);
-  }
-  return table[keyLengths][keyConcats];
+  return index;
 }
 
 function buildLUT(hist) {
@@ -316,7 +310,7 @@ function encodeValue(value: any, target: Array<number | string>) {
     // assumption: anything not in an earlier case can be treated as an object
     let keys: string[] = Object.keys(value).sort();
     let numKeys = keys.length;
-    let keysetIndex = findIndex(keys, keysetLUT, keysetList);
+    let keysetIndex = findKeysetIndex(keys, keysetList);
 
     containsOnlyBooleans = keys.every(function (key) {
       return typeof value[key] === 'boolean';
@@ -346,15 +340,34 @@ function encodeValue(value: any, target: Array<number | string>) {
   return target;
 }
 
-export default function encode(value: any): Array<number> {
+function findIndex(a, predicate) {
+  for (let i = 0; i < a.length; ++i) {
+    if (predicate(a[i])) return i;
+  }
+  return -1;
+}
+
+function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
+  return a.length === b.length && a.every((c, i) => b[i] === c);
+}
+
+export default function encode(value: any, options?: { keysetsToOmit?: Array<Array<string>> } = {}): Array<number> {
   // $FlowFixMe: output is filtered to Array<number> but hard for flow to track with our current level of annotations
   let output: Array<number | string> = [];
-  keysetLUT = {};
   keysetList = [];
   stringHist = {};
   stringPlaceholders = true;
 
+  if (options.keysetsToOmit != null) {
+    [].push.apply(keysetList, options.keysetsToOmit);
+  }
+
   let data = encodeValue(value, []);
+
+  if (options.keysetsToOmit != null) {
+    keysetList = keysetList.slice(options.keysetsToOmit.length);
+  }
+
   let keysetData = encodeValue(keysetList, []);
   let stringLUT = buildLUT(stringHist);
 

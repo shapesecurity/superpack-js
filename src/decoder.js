@@ -20,16 +20,22 @@ extension
 factor out various common threads
 */
 
-let stringLUT: Array<string>, keysetLUT, ptr: number;
+let stringLUT: Array<string>, keysetLUT: Array<Array<string>>, ptr: number;
 
-export default function decode(buf: Array<number>): any {
+export default function decode(buf: Array<number>, options?: { omittedKeysets?: Array<Array<string>> } = {}): any {
   ptr = 0;
   if (buf[0] === tags.STRLUT) {
-    stringLUT = decodeValue(buf);
-    keysetLUT = decodeValue(buf);
+    stringLUT = (decodeValue(buf): Array<string>);
+    keysetLUT = (decodeValue(buf): Array<Array<string>>);
   } else {
     stringLUT = [];
     keysetLUT = [];
+  }
+  if (options.omittedKeysets != null) {
+    let k = [];
+    [].push.apply(k, options.omittedKeysets);
+    [].push.apply(k, keysetLUT);
+    keysetLUT = k;
   }
   return decodeValue(buf);
 }

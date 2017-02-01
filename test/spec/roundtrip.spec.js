@@ -38,6 +38,7 @@ function toUint32(a, b, c, d) {
   return (a * Math.pow(2, 24)) + (b << 16) + (c << 8) + d;
 }
 
+
 describe('floating point values', function () {
   describe('single-precision (binary32)', function () {
     floats.forEach(([n, i]) => {
@@ -89,5 +90,40 @@ describe('floating point values', function () {
         expect(n).to.be.equal(decoded);
       });
     });
+  });
+});
+
+describe('omitted keysets', () => {
+  it('should roundtrip a nested object with omitted keysets', () => {
+    let o = {
+      a: 'b',
+      c: {
+        d: 'e'
+      }
+    };
+    let omitted = [['a', 'c'], ['d']];
+    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
+  });
+
+  it('should roundtrip a nested object with a subset omitted keysets', () => {
+    let o = {
+      a: 'b',
+      c: {
+        d: 'e'
+      }
+    };
+    let omitted = [['a', 'c']];
+    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
+  });
+
+  it('should roundtrip a nested object with a superset omitted keysets', () => {
+    let o = {
+      a: 'b',
+      c: {
+        d: 'e'
+      }
+    };
+    let omitted = [['a', 'c'], ['d'], ['f']];
+    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
   });
 });

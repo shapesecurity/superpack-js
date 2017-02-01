@@ -19,7 +19,8 @@ describe('encoding', function () {
     describe(category, function () {
       cases[category].forEach(function (t) {
         it('should encode ' + t.desc, function () {
-          expect(encode(t.value)).to.eql(t.bytes);
+          let opt = t.keysetsToOmit == null ? void 0 : { keysetsToOmit: t.keysetsToOmit };
+          expect(encode(t.value, opt)).to.eql(t.bytes);
         });
       });
     });
