@@ -268,7 +268,7 @@ function encodeValue(value: any, target: Array<number | string>) {
   } else if (typeof value === 'number') {
     if (isFinite(value)) {
       let v = Math.abs(value);
-      if (Math.floor(v) === v && v < F16) {
+      if (Math.floor(v) === v && v < F16 && (v !== 0 || 1 / value > 0)) {
         encodeInteger(value, target);
       } else {
         encodeFloat(value, target);
