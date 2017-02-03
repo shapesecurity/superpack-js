@@ -160,11 +160,14 @@ if (typeof Float32Array === 'function' && typeof Float64Array === 'function' && 
     let mBits = 52;
     let bias = (1 << (eBits - 1)) - 1;
 
-    let isNegative = value < 0;
+    let isNegative = value < 0 || value === 0 && 1 / value < 0;
     let v = Math.abs(value);
 
     let exp, mantissa;
-    if (v >= Math.pow(2, 1 - bias)) {
+    if (v === 0) {
+      exp = bias;
+      mantissa = 0;
+    } else if (v >= Math.pow(2, 1 - bias)) {
       // normal
       exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
       let significand = v / Math.pow(2, exp);

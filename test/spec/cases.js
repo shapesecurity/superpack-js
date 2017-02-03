@@ -77,7 +77,7 @@ let cases = {
     {
       value: -0,
       bytes: [types.FLOAT32, 0x80, 0x00, 0x00, 0x00],
-      desc: '-0 as nint4'
+      desc: '-0 as float'
     },
     {
       value: -Infinity,
