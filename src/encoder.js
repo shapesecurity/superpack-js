@@ -140,11 +140,11 @@ let encodeFloat;
 if (typeof Float32Array === 'function' && typeof Float64Array === 'function' && typeof Uint8Array === 'function') {
   encodeFloat = function (value: number, target) {
     let tag = tags.FLOAT32;
-    let f = new Float32Array;
+    let f = new Float32Array(1);
     f[0] = value;
     if (f[0] !== value) {
       tag = tags.DOUBLE64;
-      f = new Float64Array;
+      f = new Float64Array(1);
       f[0] = value;
     }
     let u = new Uint8Array(f.buffer);
