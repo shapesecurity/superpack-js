@@ -20,10 +20,9 @@
     "clean": "rm dist/*.js && rmdir dist",
     "prepublish": "npm run build"
   },
-  "main": "index.js",
+  "main": "dist/cjs/index.js",
   "module": "superpack.js",
   "files": [
-    "index.js",
     "superpack.js",
     "superpack.js.flow",
     "encoder.js",
