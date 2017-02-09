@@ -81,7 +81,6 @@ function readString(buf, length: number) {
   for (let i = 0; i < length; ++i) {
     str += String.fromCharCode(buf[ptr++]);
   }
-  // $FlowFixMe: flow doesn't know about escape yet
   return decodeURIComponent(escape(str));
 }
 
@@ -174,7 +173,6 @@ function decodeValue(buf): any {
         str += String.fromCharCode(buf[ptr++]);
       }
       ptr++;
-      // $FlowFixMe: flow doesn't know about escape yet
       return decodeURIComponent(escape(str));
     }
     case tags.STR8:
