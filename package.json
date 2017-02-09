@@ -49,7 +49,7 @@
     "chai": "3.5.0",
     "eslint": "3.10.2",
     "eslint-plugin-flowtype": "2.25.0",
-    "flow-bin": "0.36.0",
+    "flow-bin": "0.38.0",
     "gentest": "0.1.1",
     "karma": "1.2.0",
     "karma-browserify": "5.1.0",

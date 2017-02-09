@@ -45,7 +45,6 @@ function encodeString(str, target, lut) {
     // utf8Ascii will be an ascii representation of UTF-8 bytes
     // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
     let utf8Bytes = [];
-    // $FlowFixMe: flow doesn't know about unescape yet
     let utf8Ascii = unescape(encodeURIComponent(str));
     let containsNull = false;
     for (let i = 0; i < utf8Ascii.length; ++i) {
