@@ -1,3 +1,5 @@
 // @flow
 
-declare export default function encoder(value: any): Array<number>;
+import tags from "./type-tags.js";
+declare export default function encoder(value: any, options?: {keysetsToOmit?: Array<Array<string>>}): Array<number>;
+

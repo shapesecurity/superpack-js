@@ -1,3 +1,5 @@
 // @flow
 
-declare export default function decoder(buf: Array<number>): any;
+import tags from "./type-tags.js";
+declare export default function decoder(buf: Array<number>, options?: {omittedKeysets?: Array<Array<string>>}): any;
+
