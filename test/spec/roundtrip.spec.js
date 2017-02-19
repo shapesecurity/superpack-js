@@ -2,8 +2,7 @@
 
 import { expect } from 'chai';
 
-import encode from '../../src/encoder';
-import decode from '../../src/decoder';
+import { encode, decode } from '../..';
 import types from '../../src/type-tags';
 
 import floats from './floats';

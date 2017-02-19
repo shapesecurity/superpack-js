@@ -4,8 +4,7 @@ import { expect } from 'chai';
 
 import gentest, { types as t } from 'gentest';
 
-import encode from '../../src/encoder';
-import decode from '../../src/decoder';
+import { encode, decode } from '../..';
 
 
 let SAMPLE_SIZE = 10;

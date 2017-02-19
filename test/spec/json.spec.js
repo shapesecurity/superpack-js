@@ -1,8 +1,7 @@
 'use strict';
 
 import { expect } from 'chai';
-import encoder from '../../src/encoder';
-import decoder from '../../src/decoder';
+import { encode, decode } from '../..';
 import cases from './cases';
 
 let jsonStrings = [
@@ -178,8 +177,8 @@ describe('json encoding cases', function () {
   jsonStrings.forEach(function (t) {
     it('should roundtrip for ' + t.desc, function () {
       let value = JSON.parse(t.text);
-      let encoded = encoder(value);
-      let decoded = decoder(encoded);
+      let encoded = encode(value);
+      let decoded = decode(encoded);
       expect(value).to.eql(decoded);
       expect(JSON.stringify(value).length).to.equal(JSON.stringify(decoded).length);
     });
@@ -191,8 +190,8 @@ import allTypesJson from './json/all-types.json';
 import tenRecordsJson from './json/ten-records.json';
 
 function roundTrip(value) {
-  let encoded = encoder(value);
-  let decoded = decoder(encoded);
+  let encoded = encode(value);
+  let decoded = decode(encoded);
   expect(value).to.eql(decoded);
   expect(JSON.stringify(value).length).to.equal(JSON.stringify(decoded).length);
 }
@@ -212,8 +211,8 @@ describe('encoding', function () {
     describe(category, function () {
       cases[category].forEach(function (t) {
         it('should encode ' + t.desc, function () {
-          let encoded = encoder(t.value);
-          let decoded = decoder(encoded);
+          let encoded = encode(t.value);
+          let decoded = decode(encoded);
           if (isNaN(t.value)) {
             expect(isNaN(decoded)).to.be.ok;
           } else {

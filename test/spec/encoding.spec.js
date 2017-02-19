@@ -1,7 +1,7 @@
 'use strict';
 
 import { expect } from 'chai';
-import encode from '../../src/encoder';
+import { encode } from '../..';
 import cases from './cases';
 
 /*

@@ -1,18 +1,11 @@
+/* global Uint8Array */
+
 import tags from './type-tags.js';
 
+type SuperPackedValue = Array<number>;
+type Keyset = Array<string>;
+
 /*
-
-Done:
-uints
-strings
-basic values
-arrays
-maps
-barrays, bmaps
-nints
-utf-8
-float
-
 todo:
 mapl, bmapl
 timestamp
@@ -20,24 +13,34 @@ extension
 factor out various common threads
 */
 
-let stringLUT: Array<string>, keysetLUT: Array<Array<string>>, ptr: number;
+let stringLUT: Array<string>, keysets: Array<Array<string>>, ptr: number;
 
-export default function decode(buf: Array<number>, options?: { omittedKeysets?: Array<Array<string>> } = {}): any {
-  ptr = 0;
-  if (buf[0] === tags.STRLUT) {
-    stringLUT = (decodeValue(buf): Array<string>);
-    keysetLUT = (decodeValue(buf): Array<Array<string>>);
-  } else {
-    stringLUT = [];
-    keysetLUT = [];
+export default class Decoder {
+
+  constructor() {
   }
-  if (options.omittedKeysets != null) {
-    let k = [];
-    [].push.apply(k, options.omittedKeysets);
-    [].push.apply(k, keysetLUT);
-    keysetLUT = k;
+
+  static decode(buf : SuperPackedValue, options? : { omittedKeysets?: Array<Keyset> } = {}) : any {
+    return (new Decoder).decode(buf, options);
   }
-  return decodeValue(buf);
+
+  decode(buf : SuperPackedValue, options? : { omittedKeysets?: Array<Keyset> } = {}) : any {
+    ptr = 0;
+    if (buf[0] === tags.STRLUT) {
+      stringLUT = (decodeValue(buf): Array<string>);
+      keysets = (decodeValue(buf): Array<Keyset>);
+    } else {
+      stringLUT = [];
+      keysets = [];
+    }
+    if (options.omittedKeysets != null) {
+      let k = [];
+      [].push.apply(k, options.omittedKeysets);
+      [].push.apply(k, keysets);
+      keysets = k;
+    }
+    return decodeValue(buf);
+  }
 }
 
 function readUInt32(buf) {
@@ -196,7 +199,7 @@ function decodeValue(buf): any {
     case tags.MAP_: {
       let out = {};
       let keysetIndex = decodeValue(buf);
-      let keys = keysetLUT[keysetIndex];
+      let keys = keysets[keysetIndex];
       keys.forEach(function (key) {
         out[key] = decodeValue(buf);
       });
@@ -206,7 +209,7 @@ function decodeValue(buf): any {
     case tags.BMAP_: {
       let out = {};
       let keysetIndex = decodeValue(buf);
-      let keys = keysetLUT[keysetIndex];
+      let keys = keysets[keysetIndex];
       let bools = readBooleanArray(buf, keys.length);
       for (let i = 0; i < keys.length; ++i) {
         out[keys[i]] = bools[i];
