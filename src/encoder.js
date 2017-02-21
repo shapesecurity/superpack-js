@@ -1,6 +1,8 @@
 /* global ArrayBuffer Uint8Array Float32Array Float64Array */
 
 import tags from './type-tags.js';
+import Extendable from './extendable.js';
+import type { ExtensionMap, ExtensionPoint } from './extendable.js';
 
 // TODO: refactor string encoding (a la superpack-java) so that this can be just Array<number>
 type SuperPackedValue = Array<number | string>;
@@ -251,20 +253,38 @@ function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
   return a.length === b.length && a.every((c, i) => b[i] === c);
 }
 
+function find(arrayLike, predicate) {
+  for (let i = 0; i < arrayLike.length; ++i) {
+    let el = arrayLike[i];
+    if (predicate(el)) return el;
+  }
+  return null;
+}
 
-export default class Encoder {
+
+export default class Encoder extends Extendable {
   keysets: Array<Keyset>
   stringHist : StringHistogram
   stringPlaceholders : boolean
 
   constructor() {
+    super();
     this.keysets = [];
     this.stringHist = {};
     this.stringPlaceholders = true;
   }
 
-  static encode(value : any, options? : { keysetsToOmit? : Array<Keyset> } = {}) : SuperPackedValue {
-    return (new Encoder).encode(value, options);
+  static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap } = {}) : SuperPackedValue {
+    let e = new Encoder;
+    if (options.extensions != null) {
+      // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
+      Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
+        // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
+        let extension = options.extensions[ext];
+        e.extend(ext, extension.detector, extension.serialiser, extension.deserialiser);
+      });
+    }
+    return e.encode(value, options);
   }
 
   encode(value : any, options? : { keysetsToOmit? : Array<Keyset> } = {}) : SuperPackedValue {
@@ -321,8 +341,16 @@ export default class Encoder {
   }
 
   encodeValue(value: any, target: Array<number | string>) {
-    let containsOnlyBooleans;
-    if (value === false) {
+    let ext = find(
+      Object.keys(this.extensions),
+      // $FlowFixMe: flow doesn't understand that e is an ExtensionPoint
+      (e : ExtensionPoint) => this.extensions[e].detector(value)
+    );
+    if (ext != null) {
+      target.push(tags.EXTENSION);
+      this.encodeValue(+ext, target);
+      this.encodeValue(this.extensions[+ext].serialiser(value), target);
+    } else if (value === false) {
       target.push(tags.FALSE);
     } else if (value === true) {
       target.push(tags.TRUE);
@@ -361,7 +389,8 @@ export default class Encoder {
       this.pushArrayElements(new Uint8Array(value), target);
     } else if (Array.isArray(value)) {
       let numElements = value.length;
-      containsOnlyBooleans = true;
+
+      let containsOnlyBooleans = true;
 
       containsOnlyBooleans = value.every(element => typeof element === 'boolean');
 
@@ -395,7 +424,7 @@ export default class Encoder {
       let numKeys = keys.length;
       let keysetIndex = this.findKeysetIndex(keys);
 
-      containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
+      let containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
 
       if (containsOnlyBooleans) {
         target.push(tags.BMAP_);

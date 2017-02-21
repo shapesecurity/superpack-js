@@ -12,6 +12,11 @@ export default class Transcoder {
     this.decoder = new Decoder;
   }
 
+  extend(...args : any) : void {
+    this.encoder.extend(...args);
+    this.decoder.extend(...args);
+  }
+
   encode(...args : any) {
     return this.encoder.encode(...args);
   }
@@ -24,5 +29,5 @@ export default class Transcoder {
 Transcoder.encode = Encoder.encode;
 Transcoder.decode = Decoder.decode;
 
-export const encode = Encoder.encode;
-export const decode = Decoder.decode;
+export { default as Encoder, encode } from './encoder.js';
+export { default as Decoder, decode } from './decoder.js';
