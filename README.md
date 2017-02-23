@@ -38,12 +38,6 @@ let reconstructedValue = decode(payload);
 * Open a Pull Request on Github.
 
 
-## Acknowledgments
-
-Browser testing by [BrowserStack](https://www.browserstack.com/).
-
-<img width="30%" src="./bs-logo.png" />
-
 ## License
 
     Copyright 2016 Shape Security, Inc.
