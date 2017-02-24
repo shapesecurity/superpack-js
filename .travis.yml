@@ -1,11 +1,18 @@
 sudo: false
 language: node_js
 script:
-- curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
-- npm run test:ci
-node_js:
-- '6'
+  - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
+  - npm run test:ci
+node_js: '6'
 env:
+  matrix:
+    - BROWSERS=IE
+    - BROWSERS=EDGE
+    - BROWSERS=SAFARI
+    - BROWSERS=FIREFOX
+    - BROWSERS=CHROME
+    - BROWSERS=ANDROID
+    - BROWSERS=IPHONE
   global:
-  - BROWSERSTACK_USERNAME=u865
-  - secure: MpYdYMsdBvcH8nn5PJpY7DJLz2Azn4/NHA1CYwBdyu2ISKr6bJevtiOpJEXl4LYbdyJN8JM+VSgEiUgDwA8TUv4F2vys1m8lwOraLnCXEDipJ+up0wbl7hncG0CXOHlI4GSDKPY8qAl7A5/Kv/zUrAsk3iR2c6BGpihrcL8p+XWHxWURcEijmQ52tvTCG50f8N0ng1fa1nPynBqhTkaY7GD1HucfA/qCmZnLB99QDUeQmWYHMtU11V+w8dg3HZRM48YOACp5M0CeqnMjP33CqdJVVpwbnaTTtCEGdtCeeb/QvPSR9zyFmMpON4Fg7Y3fEv+kZ0OoU0n/GGwHhoV2bnc9v0gxNRs1rY7UT6+9yF54BBlZ3X3+cDx/KQOlXiffd5ppIFV4sJqY4nkl5lp7e8nv9WIg2bFLOiMTTmdozXO9s8lt7keX3yCOAF57pSn/aNyj6u2MnhuZeFUTWvKl54Fw5CABQbyNtQDCNHXgXf0tenVsRGpCar9Xq4Dx1EEW0stIan0GEnrjDme8UOfTLFtmWPYKXH5WDS56njZsx6ra9DatZs0ulW72+hSu9CLm9y6gW1xot2Eb2xZhWEcuU5NKqUAb+a4F9eHf0S5+6Ugwg9apV0asmB7vbPZhhlY6tS6om/HwxZhQJfU1ZiMECZGFKtS4ZeUpzphBwlvKy2I=
+    - BROWSERSTACK_USERNAME=u865
+    - secure: MpYdYMsdBvcH8nn5PJpY7DJLz2Azn4/NHA1CYwBdyu2ISKr6bJevtiOpJEXl4LYbdyJN8JM+VSgEiUgDwA8TUv4F2vys1m8lwOraLnCXEDipJ+up0wbl7hncG0CXOHlI4GSDKPY8qAl7A5/Kv/zUrAsk3iR2c6BGpihrcL8p+XWHxWURcEijmQ52tvTCG50f8N0ng1fa1nPynBqhTkaY7GD1HucfA/qCmZnLB99QDUeQmWYHMtU11V+w8dg3HZRM48YOACp5M0CeqnMjP33CqdJVVpwbnaTTtCEGdtCeeb/QvPSR9zyFmMpON4Fg7Y3fEv+kZ0OoU0n/GGwHhoV2bnc9v0gxNRs1rY7UT6+9yF54BBlZ3X3+cDx/KQOlXiffd5ppIFV4sJqY4nkl5lp7e8nv9WIg2bFLOiMTTmdozXO9s8lt7keX3yCOAF57pSn/aNyj6u2MnhuZeFUTWvKl54Fw5CABQbyNtQDCNHXgXf0tenVsRGpCar9Xq4Dx1EEW0stIan0GEnrjDme8UOfTLFtmWPYKXH5WDS56njZsx6ra9DatZs0ulW72+hSu9CLm9y6gW1xot2Eb2xZhWEcuU5NKqUAb+a4F9eHf0S5+6Ugwg9apV0asmB7vbPZhhlY6tS6om/HwxZhQJfU1ZiMECZGFKtS4ZeUpzphBwlvKy2I=

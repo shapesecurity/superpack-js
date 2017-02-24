@@ -1,4 +1,87 @@
 /* eslint-disable camelcase */
+
+const IE = [
+  'bs_win10_ie11',
+  'bs_win81_ie11',
+  'bs_win7_ie11',
+  'bs_win8_ie10',
+  'bs_win7_ie10',
+  'bs_win7_ie9',
+];
+
+const EDGE = [
+  'bs_win10_edge14',
+  'bs_win10_edge13',
+];
+
+const SAFARI = [
+  'bs_sierra_safari10',
+  'bs_elcapitan_safari9',
+  'bs_yosemite_safari8',
+  'bs_mavericks_safari7',
+];
+
+const FIREFOX = [
+  'bs_win10_ff50',
+  'bs_win10_ff49',
+  'bs_win10_ff48',
+  'bs_win10_ff47',
+  'bs_win7_ff46',
+  'bs_win7_ff45',
+];
+
+const CHROME = [
+  'bs_win10_chrome55',
+  'bs_win10_chrome54',
+  'bs_win10_chrome53',
+  'bs_win10_chrome52',
+  'bs_win8_chrome51',
+  'bs_win8_chrome50',
+  'bs_win8_chrome49',
+  'bs_win7_chrome48',
+];
+
+const ANDROID = [
+  'bs_android_htc44',
+  'bs_android_samsungtab44',
+  'bs_android_samsunggal44',
+];
+
+const IPHONE = [
+  'bs_iphone_91',
+  'bs_iphone_83',
+];
+
+let browsers = [];
+
+if (process.env.BROWSERS == null) {
+  browsers = [].concat(IE, EDGE, SAFARI, FIREFOX, CHROME, ANDROID, IPHONE);
+} else {
+  // example usage: BROWSERS=IE,SAFARI,ANDROID npm run test:ci
+  if (/\bIE\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(IE);
+  }
+  if (/\bEDGE\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(EDGE);
+  }
+  if (/\bSAFARI\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(SAFARI);
+  }
+  if (/\bFIREFOX\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(FIREFOX);
+  }
+  if (/\bCHROME\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(CHROME);
+  }
+  if (/\bANDROID\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(ANDROID);
+  }
+  if (/\bIPHONE\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(IPHONE);
+  }
+}
+
+
 module.exports = function (config) {
   // Set base config
   config.set(require('./base.conf'));
@@ -12,39 +95,7 @@ module.exports = function (config) {
       project: 'superpack'
     },
     reporters: ['mocha'],
-    browsers: [
-      'bs_win10_ie11',
-      'bs_win10_edge14',
-      'bs_win10_edge13',
-      'bs_win81_ie11',
-      'bs_win8_ie10',
-      'bs_win7_ie11',
-      'bs_win7_ie10',
-      'bs_win7_ie9',
-      'bs_sierra_safari10',
-      'bs_elcapitan_safari9',
-      'bs_yosemite_safari8',
-      'bs_mavericks_safari7',
-      'bs_win10_ff50',
-      'bs_win10_ff49',
-      'bs_win10_ff48',
-      'bs_win10_ff47',
-      'bs_win7_ff46',
-      'bs_win7_ff45',
-      'bs_win10_chrome55',
-      'bs_win10_chrome54',
-      'bs_win10_chrome53',
-      'bs_win10_chrome52',
-      'bs_win8_chrome51',
-      'bs_win8_chrome50',
-      'bs_win8_chrome49',
-      'bs_win7_chrome48',
-      'bs_android_htc44',
-      'bs_android_samsungtab44',
-      'bs_android_samsunggal44',
-      'bs_iphone_91',
-      'bs_iphone_83'
-    ],
+    browsers: browsers,
 
     customLaunchers: {
       bs_win10_ie11: {
