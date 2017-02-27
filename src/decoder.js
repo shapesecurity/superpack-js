@@ -31,11 +31,11 @@ export default class Decoder extends Extendable {
 
   static decode(buffer : SuperPackedValue, options? : { omittedKeysets? : Array<Keyset>, extensions? : ExtensionMap } = {}) : any {
     let d = new Decoder;
-    if (options.extensions != null) {
+    const extensions = options.extensions;
+    if (extensions != null) {
       // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
-      Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
-        // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
-        let extension = options.extensions[ext];
+      Object.keys(extensions).forEach((ext : ExtensionPoint) => {
+        let extension = extensions[ext];
         d.extend(ext, extension.detector, extension.serialiser, extension.deserialiser);
       });
     }
