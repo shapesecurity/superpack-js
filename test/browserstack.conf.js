@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 module.exports = function (config) {
   // Set base config
   config.set(require('./base.conf'));
@@ -12,71 +13,65 @@ module.exports = function (config) {
     },
     reporters: ['mocha'],
     browsers: [
-      'bs_sierra_safari10',
-      'bs_win7_ie9',
-      'bs_android_samsunggal44',
-      'bs_win10_edge14',
-      'bs_win10_ff50',
-      'bs_win10_chrome55',
+      'Windows_7_ie__9',
+      'Windows_10_edge__14',
+      'Windows_8_chrome__56',
+      'Windows_10_firefox__52',
+      'OSX_Sierra_safari__10',
+      'android_44_android_SamsungGalaxyTab4101_',
+      'ios_91_iphone_iPhone6S_'
     ],
 
     customLaunchers: {
-      'bs_android_samsunggal44': {
-        base: 'BrowserStack',
-        os: 'Android',
-        'os_version': 4.4,
-        browser: 'Android Browser',
-        device: 'Samsung Galaxy S5'
-      },
-      'bs_iphone_91': {
-        base: 'BrowserStack',
-        os: 'iOS',
-        'os_version': 9.3,
-        browser: 'iPhone',
-        device: 'iPad Mini 4'
-      },
-      'bs_sierra_safari10': {
-        base: 'BrowserStack',
+      Windows_7_ie__9: {
+        os: 'Windows',
+        os_version: '7',
+        browser: 'ie',
+        device: null,
+        browser_version: '9.0',
+        base: 'BrowserStack' },
+      Windows_10_edge__14: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'edge',
+        device: null,
+        browser_version: '14.0',
+        base: 'BrowserStack' },
+      Windows_8_chrome__56: {
+        os: 'Windows',
+        os_version: '8',
+        browser: 'chrome',
+        device: null,
+        browser_version: '56.0',
+        base: 'BrowserStack' },
+      Windows_10_firefox__52: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'firefox',
+        device: null,
+        browser_version: '52.0 beta',
+        base: 'BrowserStack' },
+      OSX_Sierra_safari__10: {
         os: 'OS X',
-        'os_version': 'Sierra',
-        browser: 'Safari',
-        'browser_version': '10.0'
-      },
-      'bs_win10_ff50': {
-        base: 'BrowserStack',
-        os: 'Windows',
-        'os_version': '10',
-        browser: 'Firefox',
-        'browser_version': '50'
-      },
-      'bs_win10_chrome55': {
-        base: 'BrowserStack',
-        os: 'Windows',
-        'os_version': '10',
-        browser: 'Chrome',
-        'browser_version': '55'
-      },
-      'bs_win10_ie11': {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '10',
-        'browser': 'IE',
-        'browser_version': '11.0',
-      },
-      'bs_win10_edge14': {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '10',
-        'browser': 'Edge',
-        'browser_version': '14.0',
-      },
-      'bs_win7_ie9': {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '7',
-        'browser': 'IE',
-        'browser_version': '9.0',
-      }
+        os_version: 'Sierra',
+        browser: 'safari',
+        device: null,
+        browser_version: '10.0',
+        base: 'BrowserStack' },
+      android_44_android_SamsungGalaxyTab4101_: {
+        os: 'android',
+        os_version: '4.4',
+        browser: 'android',
+        device: 'Samsung Galaxy Tab 4 10.1',
+        browser_version: null,
+        base: 'BrowserStack' },
+      ios_91_iphone_iPhone6S_: {
+        os: 'ios',
+        os_version: '9.1',
+        browser: 'iphone',
+        device: 'iPhone 6S',
+        browser_version: null,
+        base: 'BrowserStack' }
     },
 
     logLevel: config.LOG_INFO,

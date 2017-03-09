@@ -20,7 +20,7 @@ module.exports = {
     ]
   },
 
-  reporters: ['mocha'],
+  reporters: ['dots'],
 
   // web server port
   // CLI --port 9876
