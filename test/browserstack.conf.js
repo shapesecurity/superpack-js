@@ -22,6 +22,8 @@ const SAFARI = [
 ];
 
 const FIREFOX = [
+  'bs_win10_ff52',
+  'bs_win10_ff51',
   'bs_win10_ff50',
   'bs_win10_ff49',
   'bs_win10_ff48',
@@ -31,6 +33,7 @@ const FIREFOX = [
 ];
 
 const CHROME = [
+  'bs_win10_chrome56',
   'bs_win10_chrome55',
   'bs_win10_chrome54',
   'bs_win10_chrome53',
@@ -48,6 +51,7 @@ const ANDROID = [
 ];
 
 const IPHONE = [
+  'bs_iphone_10',
   'bs_iphone_91',
   'bs_iphone_83',
 ];
@@ -182,6 +186,20 @@ module.exports = function (config) {
         browser: 'Safari',
         browser_version: '7.1'
       },
+      bs_win10_ff52: {
+        base: 'BrowserStack',
+        os: 'Windows',
+        os_version: '10',
+        browser: 'Firefox',
+        browser_version: '52'
+      },
+      bs_win10_ff51: {
+        base: 'BrowserStack',
+        os: 'Windows',
+        os_version: '10',
+        browser: 'Firefox',
+        browser_version: '51'
+      },
       bs_win10_ff50: {
         base: 'BrowserStack',
         os: 'Windows',
@@ -223,6 +241,13 @@ module.exports = function (config) {
         os_version: '7',
         browser: 'Firefox',
         browser_version: '45'
+      },
+      bs_win10_chrome56: {
+        base: 'BrowserStack',
+        os: 'Windows',
+        os_version: '10',
+        browser: 'Chrome',
+        browser_version: '55'
       },
       bs_win10_chrome55: {
         base: 'BrowserStack',
@@ -301,17 +326,24 @@ module.exports = function (config) {
         browser: 'Android Browser',
         device: 'Samsung Galaxy S5'
       },
+      bs_iphone_10: {
+        base: 'BrowserStack',
+        os: 'iOS',
+        os_version: 10,
+        browser: 'Mobile Safari',
+        device: 'iPhone 7'
+      },
       bs_iphone_91: {
         base: 'BrowserStack',
         os: 'iOS',
         os_version: 9.3,
-        browser: 'iPhone',
+        browser: 'Mobile Safari',
         device: 'iPad Mini 4'
       },
       bs_iphone_83: {
         base: 'BrowserStack',
         os: 'iOS',
-        browser: 'iPhone',
+        browser: 'Mobile Safari',
         os_version: 8.3,
         device: 'iPhone 6 Plus'
       }
