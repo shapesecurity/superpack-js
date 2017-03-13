@@ -1,3 +1,4 @@
+// @flow
 /* global Uint8Array */
 
 import tags from './type-tags.js';

@@ -1,0 +1,21 @@
+// @flow
+export type ExtensionPoint = number;
+
+export type ExtensionMap = {
+  [extensionPoint : ExtensionPoint] : {
+    detector : any => boolean,
+    serialiser : any => any,
+    deserialiser : any => any
+  }
+};
+
+declare export default class Extendable {
+  extensions: ExtensionMap;
+
+  extend(
+    extensionPoint: ExtensionPoint,
+    detector: any => boolean,
+    serialiser: any => any,
+    deserialiser: any => any
+  ): void
+}

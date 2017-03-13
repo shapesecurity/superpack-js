@@ -1,5 +1,21 @@
 // @flow
+import Extendable from './extendable.js';
+import type { ExtensionMap } from './extendable.js';
 
-import tags from "./type-tags.js";
-declare export default function decoder(buf: Array<number>, options?: {omittedKeysets?: Array<Array<string>>}): any;
+type SuperPackedValue = Array<number>;
+type Keyset = Array<string>;
 
+declare export default class Decoder extends Extendable {
+  decode(
+    buffer: SuperPackedValue,
+    options?: {
+      omittedKeysets? : Array<Keyset>
+    }): any;
+}
+
+declare export function decode(
+  buffer: SuperPackedValue,
+  options?: {
+    omittedKeysets? : Array<Keyset>,
+    extensions? : ExtensionMap
+}): any

@@ -1,4 +1,10 @@
 // @flow
 
-declare export function decoder(buf: Array<number>): any;
-declare export function encoder(value: any): Array<number>;
+declare export default class Transcoder {
+  encode(value: any, options: any): Array<number | string>;
+  decode(buffer: Array<number>, options: any): any;
+  extend(...args: any): void;
+}
+
+declare export { encode, default as Encoder } from './encoder.js';
+declare export { decode, default as Decoder } from './decoder.js';
