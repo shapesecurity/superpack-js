@@ -1,26 +1,51 @@
-'use strict';
-
-let babelify = require('babelify');
+let babelify = require('babelify'),
+    istanbul = require('browserify-istanbul');
 
 module.exports = {
-  basePath: '',
+  basePath: '../',
 
-  frameworks: ['mocha', 'expect', 'browserify'],
+  frameworks: ['mocha', 'browserify'],
 
-  files: ['spec/**/*.spec.js'],
+  files: ['test/spec/**/*.spec.js'],
 
-  preprocessors: { '**/*.js': ['browserify'] },
+  preprocessors: { 'test/**/*.js': ['browserify'] },
 
   browserify: {
     debug: true,
     transform: [
       babelify.configure({
         presets: ['es2015']
+      }),
+      istanbul({
+        ignore: ['**/test/**'],
+        instrumenterConfig: {
+          embedSource: true
+        }
       })
     ]
   },
 
-  reporters: ['mocha'],
+  coverageReporter: {
+    reporters: [
+      { type: 'text', dir: 'build/coverage/' }
+    ],
+    check: {
+      global: {
+        statements: 86,
+        branches: 70,
+        functions: 91,
+        lines: 86
+      },
+      each: {
+        statements: 80,
+        branches: 60,
+        functions: 85,
+        lines: 80,
+      }
+    }
+  },
+
+  reporters: ['mocha', 'coverage'],
 
   // web server port
   // CLI --port 9876
