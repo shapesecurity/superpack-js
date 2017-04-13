@@ -349,7 +349,7 @@ export default class Encoder extends Extendable {
     );
     if (ext != null) {
       target.push(tags.EXTENSION);
-      this.encodeValue(+ext, target);
+      encodeUInt(+ext, target);
       this.encodeValue(this.extensions[+ext].serialiser(value), target);
     } else if (value === false) {
       target.push(tags.FALSE);

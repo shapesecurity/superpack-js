@@ -61,4 +61,26 @@ describe('extension', function () {
     expect(decoded.source).to.be.equal('a');
     expect(getFlags(decoded)).to.be.equal('i');
   });
+
+  it('does not recurse infinitely on extensions to numeric values', function () {
+    let extensions = {
+      0: {
+        // detect values which require this custom serialisation
+        detector: x => Math.floor(x) === x,
+        // serialiser: return an intermediate value which will be encoded instead
+        serialiser: n => "" + (n + 1),
+        // deserialiser: from the intermediate value, reconstruct the original value
+        deserialiser: n => parseInt(n) - 1,
+      },
+    };
+
+    let encoded = encode(0, { extensions });
+    expect(encoded).to.be.eql([
+      types.EXTENSION,
+      types.UINT6_BASE | 0,
+      types.STR5_BASE | 1, 0x31,
+    ]);
+    let decoded = decode(encoded, { extensions });
+    expect(decoded).to.be.equal(0);
+  });
 });
