@@ -52,7 +52,7 @@ const ANDROID = [
 
 const IPHONE = [
   'bs_iphone_10',
-  'bs_iphone_91',
+  'bs_iphone_93',
   'bs_iphone_83',
 ];
 
@@ -328,24 +328,24 @@ module.exports = function (config) {
       },
       bs_iphone_10: {
         base: 'BrowserStack',
-        os: 'iOS',
-        os_version: 10,
+        os: 'ios',
+        os_version: '10.0',
         browser: 'Mobile Safari',
-        device: 'iPhone 7'
+        device: 'iPhone SE'
       },
-      bs_iphone_91: {
+      bs_iphone_93: {
         base: 'BrowserStack',
-        os: 'iOS',
-        os_version: 9.3,
+        os: 'ios',
+        os_version: '9.3',
         browser: 'Mobile Safari',
-        device: 'iPad Mini 4'
+        device: 'iPhone 6S'
       },
       bs_iphone_83: {
         base: 'BrowserStack',
-        os: 'iOS',
+        os: 'ios',
+        os_version: '8.3',
         browser: 'Mobile Safari',
-        os_version: 8.3,
-        device: 'iPhone 6 Plus'
+        device: 'iPhone 6'
       }
     },
 
