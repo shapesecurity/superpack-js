@@ -282,7 +282,7 @@ export default class Encoder extends Extendable {
       Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
         // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
         let extension = options.extensions[ext];
-        e.extend(ext, extension.detector, extension.serialiser, extension.deserialiser);
+        e.extend(ext, extension.detector, extension.serialiser, extension.deserialiser, extension.memo);
       });
     }
     return e.encode(value, options);
@@ -297,11 +297,22 @@ export default class Encoder extends Extendable {
 
     let data = this.encodeValue(value, []);
 
+    let enabledExtensions = Object.keys(this.extensions).map(e => +e).sort().reverse();
+    enabledExtensions
+      .filter(e => typeof this.extensions[e].memo === 'function')
+      .forEach(e => {
+        // $FlowFixMe: this.extensions[e].memo is a function
+        let memoObj = this.extensions[e].memo(), memoBytes = [];
+        enabledExtensions.splice(enabledExtensions.indexOf(e), 1);
+        this.encodeValue(memoObj, memoBytes, enabledExtensions);
+        data = memoBytes.concat(data);
+      });
+
     if (options.keysetsToOmit != null) {
       this.keysets = this.keysets.slice(options.keysetsToOmit.length);
     }
 
-    let keysetData = this.encodeValue(this.keysets, []);
+    let keysetData = this.encodeValue(this.keysets, [], []);
     let strings = generateStringLUT(this.stringHist);
 
     this.stringPlaceholders = false;
@@ -309,7 +320,7 @@ export default class Encoder extends Extendable {
     if (strings.length > 0 || this.keysets.length > 0) {
       output.push(tags.STRLUT);
       output.push(strings.length);
-      this.pushArrayElements(strings, output);
+      this.pushArrayElements(strings, output, []);
       data = keysetData.concat(data);
     }
 
@@ -335,22 +346,26 @@ export default class Encoder extends Extendable {
     return index;
   }
 
-  pushArrayElements(value : any, target : SuperPackedValue) {
+  pushArrayElements(value : any, target : SuperPackedValue, enabledExtensions?: Array<ExtensionPoint>) {
     [].forEach.call(value, element => {
-      this.encodeValue(element, target);
+      this.encodeValue(element, target, enabledExtensions);
     });
   }
 
-  encodeValue(value: any, target: Array<number | string>) {
+  encodeValue(value: any, target: Array<number | string>, enabledExtensions?: Array<ExtensionPoint>) {
     let ext = find(
-      Object.keys(this.extensions),
+      enabledExtensions || Object.keys(this.extensions),
       // $FlowFixMe: flow doesn't understand that e is an ExtensionPoint
       (e : ExtensionPoint) => this.extensions[e].detector(value)
     );
     if (ext != null) {
       target.push(tags.EXTENSION);
       encodeUInt(+ext, target);
-      this.encodeValue(this.extensions[+ext].serialiser(value), target);
+      let furtherExtensions = enabledExtensions == null
+        ? Object.keys(this.extensions).map(e => +e)
+        : enabledExtensions.slice();
+      furtherExtensions.splice(furtherExtensions.indexOf(+ext), 1);
+      this.encodeValue(this.extensions[+ext].serialiser(value), target, furtherExtensions);
     } else if (value === false) {
       target.push(tags.FALSE);
     } else if (value === true) {
@@ -386,8 +401,8 @@ export default class Encoder extends Extendable {
       encodeDate(value, target);
     } else if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
       target.push(tags.BINARY_);
-      this.encodeValue(value.byteLength, target);
-      this.pushArrayElements(new Uint8Array(value), target);
+      this.encodeValue(value.byteLength, target, enabledExtensions);
+      this.pushArrayElements(new Uint8Array(value), target, enabledExtensions);
     } else if (Array.isArray(value)) {
       let numElements = value.length;
 
@@ -417,7 +432,7 @@ export default class Encoder extends Extendable {
           target.push(tags.ARRAY_);
           encodeUInt(numElements, target);
         }
-        this.pushArrayElements(value, target);
+        this.pushArrayElements(value, target, enabledExtensions);
       }
     } else {
       // assumption: anything not in an earlier case can be treated as an object
@@ -443,7 +458,7 @@ export default class Encoder extends Extendable {
         target.push(tags.MAP_);
         encodeUInt(keysetIndex, target);
 
-        keys.forEach(key => this.encodeValue(value[key], target));
+        keys.forEach(key => this.encodeValue(value[key], target, enabledExtensions));
       }
     }
     return target;

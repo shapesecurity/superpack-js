@@ -20,7 +20,8 @@ export default class Decoder extends Extendable {
   strings: Array<string>
   keysets: Array<Keyset>
   buffer : SuperPackedValue
-  ptr: number
+  ptr : number
+  memos : { [e : ExtensionPoint] : any }
 
   constructor() {
     super();
@@ -28,6 +29,7 @@ export default class Decoder extends Extendable {
     this.keysets = [];
     this.buffer = [];
     this.ptr = 0;
+    this.memos = {};
   }
 
   static decode(buffer : SuperPackedValue, options? : { omittedKeysets? : Array<Keyset>, extensions? : ExtensionMap } = {}) : any {
@@ -37,7 +39,7 @@ export default class Decoder extends Extendable {
       // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
       Object.keys(extensions).forEach((ext : ExtensionPoint) => {
         let extension = extensions[ext];
-        d.extend(ext, extension.detector, extension.serialiser, extension.deserialiser);
+        d.extend(ext, extension.detector, extension.serialiser, extension.deserialiser, extension.memo);
       });
     }
     return d.decode(buffer, options);
@@ -45,16 +47,25 @@ export default class Decoder extends Extendable {
 
   decode(buffer : SuperPackedValue, options? : { omittedKeysets? : Array<Keyset> } = {}) : any {
     this.buffer = buffer;
+
     if (buffer[0] === tags.STRLUT) {
       this.strings = (this.decodeValue(): Array<string>);
       this.keysets = (this.decodeValue(): Array<Keyset>);
     }
+
     if (options.omittedKeysets != null) {
       let k = [];
       [].push.apply(k, options.omittedKeysets);
       [].push.apply(k, this.keysets);
       this.keysets = k;
     }
+
+    Object.keys(this.extensions).map(e => +e).sort()
+      .filter(e => typeof this.extensions[e].memo === 'function')
+      .forEach(e => {
+        this.memos[e] = this.decodeValue();
+      });
+
     return this.decodeValue();
   }
 
@@ -234,7 +245,7 @@ export default class Decoder extends Extendable {
 
       case tags.EXTENSION: {
         let ext : ExtensionPoint = this.decodeValue();
-        return this.extensions[ext].deserialiser(this.decodeValue());
+        return this.extensions[ext].deserialiser(this.decodeValue(), this.memos[ext]);
       }
 
       default:
