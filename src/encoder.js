@@ -277,12 +277,11 @@ export default class Encoder extends Extendable {
 
   static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap } = {}) : SuperPackedValue {
     let e = new Encoder;
-    if (options.extensions != null) {
+    const extensions = options.extensions;
+    if (extensions != null) {
       // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
-      Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
-        // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
-        let extension = options.extensions[ext];
-        e.extend(ext, extension.detector, extension.serialiser, extension.deserialiser, extension.memo);
+      Object.keys(extensions).forEach((ext : ExtensionPoint) => {
+        e.extend(ext, extensions[ext]);
       });
     }
     return e.encode(value, options);
@@ -290,6 +289,7 @@ export default class Encoder extends Extendable {
 
   encode(value : any, options? : { keysetsToOmit? : Array<Keyset> } = {}) : SuperPackedValue {
     let output : SuperPackedValue = [];
+    this.initialiseExtensions();
 
     if (options.keysetsToOmit != null) {
       [].push.apply(this.keysets, options.keysetsToOmit);

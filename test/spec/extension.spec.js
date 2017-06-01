@@ -15,12 +15,14 @@ describe('extension', function () {
     transcoder.extend(
       // extension point
       0,
-      // detect values which require this custom serialisation
-      x => x instanceof RegExp,
-      // serialiser: return an intermediate value which will be encoded instead
-      r => [r.source, getFlags(r)],
-      // deserialiser: from the intermediate value, reconstruct the original value
-      ([source, flags]) => RegExp(source, flags),
+      class {
+        // detect values which require this custom serialisation
+        detector(x) { return  x instanceof RegExp; }
+        // serialiser: return an intermediate value which will be encoded instead
+        serialiser(r) { return [r.source, getFlags(r)]; }
+        // deserialiser: from the intermediate value, reconstruct the original value
+        deserialiser([source, flags]) { return RegExp(source, flags); }
+      }
     );
 
     let encoded = transcoder.encode(/a/i);
@@ -38,13 +40,13 @@ describe('extension', function () {
 
   it('can allow us to express RegExps using the functional interface', function () {
     let extensions = {
-      0: {
+      0: class {
         // detect values which require this custom serialisation
-        detector: x => x instanceof RegExp,
+        detector(x) { return x instanceof RegExp; }
         // serialiser: return an intermediate value which will be encoded instead
-        serialiser: r => [r.source, getFlags(r)],
+        serialiser(r) { return [r.source, getFlags(r)]; }
         // deserialiser: from the intermediate value, reconstruct the original value
-        deserialiser: ([source, flags]) => RegExp(source, flags),
+        deserialiser([source, flags]) { return RegExp(source, flags); }
       },
     };
 
@@ -63,13 +65,13 @@ describe('extension', function () {
 
   it('does not recurse infinitely on extensions to numeric values', function () {
     let extensions = {
-      0: {
+      0: class {
         // detect values which require this custom serialisation
-        detector: x => Math.floor(x) === x,
+        detector(x) { return Math.floor(x) === x; }
         // serialiser: return an intermediate value which will be encoded instead
-        serialiser: n => '' + (n + 1),
+        serialiser(n) { return '' + (n + 1); }
         // deserialiser: from the intermediate value, reconstruct the original value
-        deserialiser: n => parseInt(n) - 1,
+        deserialiser(n) { return parseInt(n) - 1; }
       },
     };
 
@@ -85,18 +87,19 @@ describe('extension', function () {
   describe('stores a memo and uses it in the decoding process', function () {
 
     it('can reproduce the string deduplication optimisation and avoids infinite looping', function () {
-      let strings = [];
-
       let extensions = {
-        0: {
-          detector: x => typeof x === 'string',
-          serialiser: s => {
-            let i = strings.indexOf(s);
+        0: class {
+          constructor() {
+            this.strings = [];
+          }
+          detector(x) { return typeof x === 'string'; }
+          serialiser(s) {
+            let i = this.strings.indexOf(s);
             if (i >= 0) return i;
-            return strings.push(s) - 1;
-          },
-          deserialiser: (n, memo) => memo[n],
-          memo: () => strings,
+            return this.strings.push(s) - 1;
+          }
+          deserialiser(n, memo) { return memo[n]; }
+          memo() { return this.strings; }
         },
       };
 
@@ -121,123 +124,100 @@ describe('extension', function () {
       expect(decoded).to.be.eql(data);
     });
 
-    it('can represent object identity and pick fields', function () {
-      // parallel arrays are a poor man's Map
-      let identities = [];
-      let fields = [];
+    it('can represent object identity and circular references', function () {
+      let { registerIdentity, extension } = (() => {
+        let identities = [];
+        return {
+          registerIdentity(x) { identities.push(x); },
+          extension: class {
+            detector(x) { return identities.indexOf(x) >= 0; }
+            serialiser(o) { return identities.indexOf(o); }
+            deserialiser(n, memo) { return memo[n]; }
+            memo() { return identities; }
+          }
+        };
+      })();
 
-      function pushFieldNames(arr, fieldNames) {
-        fieldNames.forEach(f => {
-          if (arr.indexOf(f) < 0) arr.push(f);
-        });
-        arr.sort();
-      }
-      function registerIdentity(obj, fieldNames) {
-        let idx = identities.indexOf(obj);
-        if (idx >= 0) {
-          pushFieldNames(fields[idx], fieldNames);
-        } else {
-          let idx = identities.push(obj) - 1;
-          fields[idx] = [].concat(fieldNames);
-        }
-      }
-      function pick(obj, fieldNames) {
-        let out = {};
-        fieldNames.forEach(f => {
-          out[f] = obj[f];
-        });
-        return out;
-      }
+      let extensions = { 0: extension };
 
-      let extensions = {
-        0: {
-          detector: x => identities.indexOf(x) >= 0,
-          serialiser: o => identities.indexOf(o),
-          deserialiser: (n, memo) => memo[n],
-          memo: () => identities.map((o, idx) => pick(o, fields[idx])),
-        },
-      };
-
-      let a = { a: 0 }, b = { b: 0 }, c = { a: a }, d = { a: 0, b: 1, c: 2, d: 3 };
+      let a = { a: 8 }, b = { b: 9 }, c = { a: a }, d = { a: 4, b: 5, c: 6 };
       let data = [a, a, b, c, b, d];
-      registerIdentity(a, []);
-      registerIdentity(d, ['a', 'b']);
-      registerIdentity(d, ['b', 'c']);
+
+      registerIdentity(a);
+      registerIdentity(d);
 
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
         types.STRLUT, 0,
-        types.ARRAY5_BASE | 4,
+        types.ARRAY5_BASE | 3,
           types.ARRAY5_BASE | 1,
             types.STR5_BASE | 1, 'b'.charCodeAt(0),
           types.ARRAY5_BASE | 1,
             types.STR5_BASE | 1, 'a'.charCodeAt(0),
-          types.ARRAY5_BASE | 0,
           types.ARRAY5_BASE | 3,
             types.STR5_BASE | 1, 'a'.charCodeAt(0),
             types.STR5_BASE | 1, 'b'.charCodeAt(0),
             types.STR5_BASE | 1, 'c'.charCodeAt(0),
         types.ARRAY5_BASE | 2,
-          types.BMAP_, 2,
-          types.MAP_, 3,
-            0,
-            1,
-            2,
+          types.MAP_, 1,
+            8,
+          types.MAP_, 2,
+            4,
+            5,
+            6,
         types.ARRAY5_BASE | 6,
           types.EXTENSION, 0, 0,
           types.EXTENSION, 0, 0,
           types.MAP_, 0,
-            0,
+            9,
           types.MAP_, 1,
             types.EXTENSION, 0, 0,
           types.MAP_, 0,
-            0,
+            9,
           types.EXTENSION, 0, 1,
       ]);
       let decoded = decode(encoded, { extensions });
 
-      expect(decoded[0]).to.be.eql({});
-      expect(decoded[1]).to.be.eql({});
+      expect(decoded[0]).to.be.eql(a);
+      expect(decoded[1]).to.be.eql(a);
       expect(decoded[2]).to.be.eql(b);
       expect(decoded[3]).to.be.eql({ a: decoded[0] });
       expect(decoded[4]).to.be.eql(b);
-      expect(decoded[5]).to.be.eql({ a: 0, b: 1, c: 2 });
+      expect(decoded[5]).to.be.eql({ a: 4, b: 5, c: 6 });
 
       expect(decoded[0]).to.be.equal(decoded[1]);
       expect(decoded[2]).not.to.be.equal(decoded[4]);
       expect(decoded[3].a).to.be.equal(decoded[0]);
       expect(decoded[5]).to.have.keys('a', 'b', 'c');
-      expect(decoded[5]).not.to.have.keys('d');
     });
 
     it('can encode symbols', function () {
       if (typeof Symbol !== 'function') return;
-
-      let symbols = [];
-      let decodedSymbols = [];
 
       function getDescription(sym) {
         return String(sym).slice(7, -1);
       }
 
       let extensions = {
-        0: {
-          detector: x => typeof x === 'symbol' || x && x.constructor === Symbol,
-          serialiser: s => {
-            let i = symbols.indexOf(s);
+        0: class {
+          constructor() {
+            this.symbols = [];
+          }
+          detector(x) { return typeof x === 'symbol' || x && x.constructor === Symbol; }
+          serialiser(s) {
+            let i = this.symbols.indexOf(s);
             if (i >= 0) return i;
-            return symbols.push(s) - 1;
-          },
-          deserialiser: (n, memo) => {
-            if (decodedSymbols[n] == null) {
+            return this.symbols.push(s) - 1;
+          }
+          deserialiser(n, memo) {
+            if (this.symbols[n] == null) {
               let s = Symbol(memo[n]);
-              decodedSymbols[n] = s;
+              this.symbols[n] = s;
               return s;
-            } else {
-              return decodedSymbols[n];
             }
-          },
-          memo: () => symbols.map(getDescription),
+            return this.symbols[n];
+          }
+          memo() { return this.symbols.map(getDescription); }
         },
       };
 
@@ -263,33 +243,43 @@ describe('extension', function () {
     });
 
     it('can support more than one extension point that uses a memo at the same time', function () {
-      let identities = [];
-      let numbers = [];
+      let { registerIdentity, extension: identityExtension } = (() => {
+        let identities = [];
+        return {
+          registerIdentity(x) { identities.push(x); },
+          extension: class {
+            detector(x) { return identities.indexOf(x) >= 0; }
+            serialiser(o) { return identities.indexOf(o); }
+            deserialiser(n, memo) { return memo[n]; }
+            memo() { return identities; }
+          }
+        };
+      })();
 
-      let extensions = {
-        // number interning
-        0: {
-          detector: x => typeof x === 'number',
-          serialiser: n => {
-            let i = numbers.indexOf(n);
-            if (i >= 0) return i;
-            return numbers.push(n) - 1;
-          },
-          deserialiser: (n, memo) => memo[n],
-          memo: () => numbers,
-        },
-        // object identity preservation
-        1: {
-          detector: x => !Array.isArray(x) && typeof x === 'object' && x !== null && identities.indexOf(x) >= 0,
-          serialiser: o => identities.indexOf(o),
-          deserialiser: (n, memo) => memo[n],
-          memo: () => identities,
-        },
+      let numberInterningExtension = class {
+        constructor() {
+          this.numbers = [];
+        }
+        detector(x) { return typeof x === 'number'; }
+        serialiser(n) {
+          let i = this.numbers.indexOf(n);
+          if (i >= 0) return i;
+          return this.numbers.push(n) - 1;
+        }
+        deserialiser(n, memo) { return memo[n]; }
+        memo() { return this.numbers; }
       };
+
+      let extensions = [
+        numberInterningExtension,
+        identityExtension,
+      ];
 
       let a = { a: 999990 }, b = { b: 999990 }, c = { a: a }, d = { a: 999990, b: 999991, c: 999992, d: 999993 };
       let data = [a, a, b, c, b, d];
-      identities.push(a, b);
+
+      registerIdentity(a);
+      registerIdentity(b);
 
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
