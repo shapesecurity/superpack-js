@@ -86,38 +86,3 @@ describe('floating point values', function () {
     });
   });
 });
-
-describe('omitted keysets', () => {
-  it('should roundtrip a nested object with omitted keysets', () => {
-    let o = {
-      a: 'b',
-      c: {
-        d: 'e'
-      }
-    };
-    let omitted = [['a', 'c'], ['d']];
-    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
-  });
-
-  it('should roundtrip a nested object with a subset omitted keysets', () => {
-    let o = {
-      a: 'b',
-      c: {
-        d: 'e'
-      }
-    };
-    let omitted = [['a', 'c']];
-    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
-  });
-
-  it('should roundtrip a nested object with a superset omitted keysets', () => {
-    let o = {
-      a: 'b',
-      c: {
-        d: 'e'
-      }
-    };
-    let omitted = [['a', 'c'], ['d'], ['f']];
-    expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
-  });
-});

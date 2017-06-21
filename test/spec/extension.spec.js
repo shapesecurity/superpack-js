@@ -27,7 +27,7 @@ describe('extension', function () {
 
     let encoded = transcoder.encode(/a/i);
     expect(encoded).to.be.eql([
-      types.EXTENSION, 0,
+      types.EXTENSION3_BASE,
         types.ARRAY5_BASE | 2,
           types.STR5_BASE | 1, 'a'.charCodeAt(0),
           types.STR5_BASE | 1, 'i'.charCodeAt(0),
@@ -52,7 +52,7 @@ describe('extension', function () {
 
     let encoded = encode(/a/i, { extensions });
     expect(encoded).to.be.eql([
-      types.EXTENSION, 0,
+      types.EXTENSION3_BASE,
         types.ARRAY5_BASE | 2,
           types.STR5_BASE | 1, 'a'.charCodeAt(0),
           types.STR5_BASE | 1, 'i'.charCodeAt(0),
@@ -77,7 +77,7 @@ describe('extension', function () {
 
     let encoded = encode(0, { extensions });
     expect(encoded).to.be.eql([
-      types.EXTENSION, 0,
+      types.EXTENSION3_BASE,
         types.STR5_BASE | 1, '1'.charCodeAt(0),
     ]);
     let decoded = decode(encoded, { extensions });
@@ -112,12 +112,12 @@ describe('extension', function () {
           types.STR5_BASE | 1, 'c'.charCodeAt(0),
           types.STR5_BASE | 1, 'd'.charCodeAt(0),
         types.ARRAY5_BASE | 6,
-          types.EXTENSION, 0, 0,
-          types.EXTENSION, 0, 0,
-          types.EXTENSION, 0, 1,
-          types.EXTENSION, 0, 2,
-          types.EXTENSION, 0, 1,
-          types.EXTENSION, 0, 3,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 1,
+          types.EXTENSION3_BASE, 2,
+          types.EXTENSION3_BASE, 1,
+          types.EXTENSION3_BASE, 3,
       ]);
       let decoded = decode(encoded, { extensions });
 
@@ -148,33 +148,35 @@ describe('extension', function () {
 
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 3,
-          types.ARRAY5_BASE | 1,
-            types.STR5_BASE | 1, 'b'.charCodeAt(0),
-          types.ARRAY5_BASE | 1,
-            types.STR5_BASE | 1, 'a'.charCodeAt(0),
-          types.ARRAY5_BASE | 3,
-            types.STR5_BASE | 1, 'a'.charCodeAt(0),
-            types.STR5_BASE | 1, 'b'.charCodeAt(0),
-            types.STR5_BASE | 1, 'c'.charCodeAt(0),
         types.ARRAY5_BASE | 2,
-          types.MAP_, 1,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
             8,
-          types.MAP_, 2,
+          types.MAP,
+            types.ARRAY5_BASE | 3,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
+              types.STR5_BASE | 1, 'b'.charCodeAt(0),
+              types.STR5_BASE | 1, 'c'.charCodeAt(0),
             4,
             5,
             6,
         types.ARRAY5_BASE | 6,
-          types.EXTENSION, 0, 0,
-          types.EXTENSION, 0, 0,
-          types.MAP_, 0,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 0,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'b'.charCodeAt(0),
             9,
-          types.MAP_, 1,
-            types.EXTENSION, 0, 0,
-          types.MAP_, 0,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
+            types.EXTENSION3_BASE, 0,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'b'.charCodeAt(0),
             9,
-          types.EXTENSION, 0, 1,
+          types.EXTENSION3_BASE, 1,
       ]);
       let decoded = decode(encoded, { extensions });
 
@@ -230,9 +232,9 @@ describe('extension', function () {
           types.STR5_BASE | 1, 'a'.charCodeAt(0),
           types.STR5_BASE | 1, 'b'.charCodeAt(0),
         types.ARRAY5_BASE | 3,
-          types.EXTENSION, 0, 0,
-          types.EXTENSION, 0, 0,
-          types.EXTENSION, 0, 1,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 1,
       ]);
       let decoded = decode(encoded, { extensions });
 
@@ -283,20 +285,6 @@ describe('extension', function () {
 
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
-        types.STRLUT, 0,
-
-        // keysets
-        types.ARRAY5_BASE | 3,
-          types.ARRAY5_BASE | 1,
-            types.STR5_BASE | 1, 'a'.charCodeAt(0),
-          types.ARRAY5_BASE | 4,
-            types.STR5_BASE | 1, 'a'.charCodeAt(0),
-            types.STR5_BASE | 1, 'b'.charCodeAt(0),
-            types.STR5_BASE | 1, 'c'.charCodeAt(0),
-            types.STR5_BASE | 1, 'd'.charCodeAt(0),
-          types.ARRAY5_BASE | 1,
-            types.STR5_BASE | 1, 'b'.charCodeAt(0),
-
         // memo for number interning extension
         types.ARRAY5_BASE | 6,
           0, // the index of "a" in the identities table
@@ -308,28 +296,39 @@ describe('extension', function () {
 
         // memo for object identity preservation extension
         types.ARRAY5_BASE | 2,
-          types.MAP_, 0,
-            types.EXTENSION, 0, 2,
-          types.MAP_, 2,
-            types.EXTENSION, 0, 2,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
+            types.EXTENSION3_BASE, 2,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'b'.charCodeAt(0),
+            types.EXTENSION3_BASE, 2,
 
         types.ARRAY5_BASE | 6,
-          types.EXTENSION, 1,
-            types.EXTENSION, 0, 0,
-          types.EXTENSION, 1,
-            types.EXTENSION, 0, 0,
-          types.EXTENSION, 1,
-            types.EXTENSION, 0, 1,
-          types.MAP_, 0,
-            types.EXTENSION, 1,
-              types.EXTENSION, 0, 0,
-          types.EXTENSION, 1,
-            types.EXTENSION, 0, 1,
-          types.MAP_, 1,
-            types.EXTENSION, 0, 2,
-            types.EXTENSION, 0, 3,
-            types.EXTENSION, 0, 4,
-            types.EXTENSION, 0, 5,
+          types.EXTENSION3_BASE | 1,
+            types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE | 1,
+            types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE | 1,
+            types.EXTENSION3_BASE, 1,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
+            types.EXTENSION3_BASE | 1,
+              types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE | 1,
+            types.EXTENSION3_BASE, 1,
+          types.MAP,
+            types.ARRAY5_BASE | 4,
+              types.STR5_BASE | 1, 'a'.charCodeAt(0),
+              types.STR5_BASE | 1, 'b'.charCodeAt(0),
+              types.STR5_BASE | 1, 'c'.charCodeAt(0),
+              types.STR5_BASE | 1, 'd'.charCodeAt(0),
+            types.EXTENSION3_BASE, 2,
+            types.EXTENSION3_BASE, 3,
+            types.EXTENSION3_BASE, 4,
+            types.EXTENSION3_BASE, 5,
       ]);
       let decoded = decode(encoded, { extensions });
 

@@ -7,8 +7,6 @@ import type { ExtensionMap, ExtensionPoint } from './extendable.js';
 
 // TODO: refactor string encoding (a la superpack-java) so that this can be just Array<number>
 type SuperPackedValue = Array<number | string>;
-type Keyset = Array<string>;
-type StringHistogram = { [s : string] : number };
 
 const F16 = 0xFFFFFFFFFFFFFFFF;
 const F8 = 0xFFFFFFFF;
@@ -67,44 +65,36 @@ function encodeDate(value, target) {
   pushUInt32(timestamp >>> 0, target);
 }
 
-function encodeString(str : string, target : SuperPackedValue, lut? : Array<string>) {
-  let index = lut ? lut.indexOf(str) : -1;
-  if (index !== -1) {
-    // Using indexOf knowing lut.length <= 255 so it's O(1)
-    // todo: consider better ways to do this
-    target.push(tags.STRREF, index);
-  } else {
-    // Note: this encoding fails if value contains an unmatched surrogate half.
-    // utf8Ascii will be an ascii representation of UTF-8 bytes
-    // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
-    let utf8Bytes = [];
-    let utf8Ascii = unescape(encodeURIComponent(str));
-    let containsNull = false;
-    for (let i = 0; i < utf8Ascii.length; ++i) {
-      utf8Bytes.push(utf8Ascii.charCodeAt(i));
-      if (utf8Bytes[i] === 0) containsNull = true;
-    }
+function encodeString(str : string, target : SuperPackedValue) {
+  // Note: this encoding fails if value contains an unmatched surrogate half.
+  // utf8Ascii will be an ascii representation of UTF-8 bytes
+  // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
+  let utf8Bytes = [];
+  let utf8Ascii = unescape(encodeURIComponent(str));
+  let containsNull = false;
+  for (let i = 0; i < utf8Ascii.length; ++i) {
+    utf8Bytes.push(utf8Ascii.charCodeAt(i));
+    if (utf8Bytes[i] === 0) containsNull = true;
+  }
 
-    let numBytes = utf8Bytes.length;
-    if (numBytes < 32) {
-      target.push(tags.STR5_BASE | numBytes);
-    } else if (!containsNull) {
-      target.push(tags.CSTRING);
-      utf8Bytes.push(0);
-    } else if (numBytes <= F2) {
-      target.push(tags.STR8, numBytes);
-    } else {
-      target.push(tags.STR_);
-      encodeUInt(numBytes, target);
+  let numBytes = utf8Bytes.length;
+  if (numBytes < 32) {
+    target.push(tags.STR5_BASE | numBytes);
+  } else if (!containsNull) {
+    target.push(tags.CSTRING);
+    utf8Bytes.push(0);
+  } else {
+    target.push(tags.STR_);
+    encodeUInt(numBytes, target);
+  }
+
+  const APPLY_CHUNK_SIZE = 0xFFFF;
+  if (utf8Bytes.length > APPLY_CHUNK_SIZE) {
+    for (let i = 0; i < utf8Bytes.length; i += APPLY_CHUNK_SIZE) {
+      [].push.apply(target, utf8Bytes.slice(i, i + APPLY_CHUNK_SIZE));
     }
-    const APPLY_CHUNK_SIZE = 0xFFFF;
-    if (utf8Bytes.length > APPLY_CHUNK_SIZE) {
-      for (let i = 0; i < utf8Bytes.length; i += APPLY_CHUNK_SIZE) {
-        [].push.apply(target, utf8Bytes.slice(i, i + APPLY_CHUNK_SIZE));
-      }
-    } else {
-      [].push.apply(target, utf8Bytes);
-    }
+  } else {
+    [].push.apply(target, utf8Bytes);
   }
 }
 
@@ -232,28 +222,6 @@ function roundToEven(n) {
   return w % 2 ? w + 1 : w;
 }
 
-function generateStringLUT(hist) : Array<string> {
-  // Keep the up-to-255 keys that will save the most space, sorted by savings
-  return Object.keys(hist)
-    .filter(key => hist[key] >= 2 && key.length * hist[key] >= 8)
-    // [key, expected savings]
-    .map(key => [key, ((key.length + 1) * hist[key]) - (key.length + 1 + 2 * hist[key])])
-    .sort((e1, e2) => e2[1] - e1[1])
-    .slice(0, 255)
-    .map(elt => elt[0]);
-}
-
-function findIndex(a, predicate) {
-  for (let i = 0; i < a.length; ++i) {
-    if (predicate(a[i])) return i;
-  }
-  return -1;
-}
-
-function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
-  return a.length === b.length && a.every((c, i) => b[i] === c);
-}
-
 function find(arrayLike, predicate) {
   for (let i = 0; i < arrayLike.length; ++i) {
     let el = arrayLike[i];
@@ -264,18 +232,11 @@ function find(arrayLike, predicate) {
 
 
 export default class Encoder extends Extendable {
-  keysets: Array<Keyset>
-  stringHist : StringHistogram
-  stringPlaceholders : boolean
-
   constructor() {
     super();
-    this.keysets = [];
-    this.stringHist = {};
-    this.stringPlaceholders = true;
   }
 
-  static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap } = {}) : SuperPackedValue {
+  static encode(value : any, options? : { extensions? : ExtensionMap } = {}) : SuperPackedValue {
     let e = new Encoder;
     const extensions = options.extensions;
     if (extensions != null) {
@@ -287,13 +248,8 @@ export default class Encoder extends Extendable {
     return e.encode(value, options);
   }
 
-  encode(value : any, options? : { keysetsToOmit? : Array<Keyset> } = {}) : SuperPackedValue {
-    let output : SuperPackedValue = [];
+  encode(value : any) : SuperPackedValue {
     this.initialiseExtensions();
-
-    if (options.keysetsToOmit != null) {
-      [].push.apply(this.keysets, options.keysetsToOmit);
-    }
 
     let data = this.encodeValue(value, []);
 
@@ -308,43 +264,10 @@ export default class Encoder extends Extendable {
         data = memoBytes.concat(data);
       });
 
-    if (options.keysetsToOmit != null) {
-      this.keysets = this.keysets.slice(options.keysetsToOmit.length);
-    }
-
-    let keysetData = this.encodeValue(this.keysets, [], []);
-    let strings = generateStringLUT(this.stringHist);
-
-    this.stringPlaceholders = false;
-
-    if (strings.length > 0 || this.keysets.length > 0) {
-      output.push(tags.STRLUT);
-      output.push(strings.length);
-      this.pushArrayElements(strings, output, []);
-      data = keysetData.concat(data);
-    }
-
-    data.forEach(piece => {
-      if (typeof piece === 'string') {
-        encodeString(piece, output, strings);
-      } else {
-        output.push(piece);
-      }
-    });
-
-    return output;
+    return data;
   }
 
   /* begin private use area */
-
-  // WARN: keys are sorted
-  findKeysetIndex(keys : Keyset) {
-    let index = findIndex(this.keysets, a => isSortedArrayOfThingsSameAsSortedArrayOfThings(a, keys));
-    if (index < 0) {
-      return this.keysets.push(keys) - 1;
-    }
-    return index;
-  }
 
   pushArrayElements(value : any, target : SuperPackedValue, enabledExtensions?: Array<ExtensionPoint>) {
     [].forEach.call(value, element => {
@@ -359,8 +282,12 @@ export default class Encoder extends Extendable {
       (e : ExtensionPoint) => this.extensions[e].detector(value)
     );
     if (ext != null) {
-      target.push(tags.EXTENSION);
-      encodeUInt(+ext, target);
+      if (+ext < 8) {
+        target.push(tags.EXTENSION3_BASE | +ext);
+      } else {
+        target.push(tags.EXTENSION_);
+        encodeUInt(+ext, target);
+      }
       let furtherExtensions = enabledExtensions == null
         ? Object.keys(this.extensions).map(e => +e)
         : enabledExtensions.slice();
@@ -390,13 +317,7 @@ export default class Encoder extends Extendable {
         target.push(tags.FLOAT32, 0x7F, 0xC0, 0x00, 0x00);
       }
     } else if (typeof value === 'string') {
-      // Push the string itself for handling later
-      if (this.stringPlaceholders) {
-        this.stringHist[value] = (this.stringHist[value] || 0) + 1;
-        target.push(value);
-      } else {
-        encodeString(value, target);
-      }
+      encodeString(value, target);
     } else if ({}.toString.call(value) === '[object Date]') {
       encodeDate(value, target);
     } else if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
@@ -413,8 +334,6 @@ export default class Encoder extends Extendable {
       if (containsOnlyBooleans && numElements > 0) {
         if (numElements <= 15) {
           target.push(tags.BARRAY4_BASE | numElements);
-        } else if (numElements <= 255) {
-          target.push(tags.BARRAY8, numElements);
         } else {
           target.push(tags.BARRAY_);
           encodeUInt(numElements, target);
@@ -426,8 +345,6 @@ export default class Encoder extends Extendable {
       } else {
         if (numElements <= 31) {
           target.push(tags.ARRAY5_BASE | numElements);
-        } else if (numElements <= 255) {
-          target.push(tags.ARRAY8, numElements);
         } else {
           target.push(tags.ARRAY_);
           encodeUInt(numElements, target);
@@ -438,13 +355,12 @@ export default class Encoder extends Extendable {
       // assumption: anything not in an earlier case can be treated as an object
       let keys: string[] = Object.keys(value).sort();
       let numKeys = keys.length;
-      let keysetIndex = this.findKeysetIndex(keys);
 
       let containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
 
       if (containsOnlyBooleans) {
-        target.push(tags.BMAP_);
-        encodeUInt(keysetIndex, target);
+        target.push(tags.BMAP);
+        this.encodeValue(keys, target, enabledExtensions);
 
         let b = [0, 0, 0, 0, 0, 0, 0, 0];
         for (let i = 0; i < numKeys; i += 8) {
@@ -455,8 +371,8 @@ export default class Encoder extends Extendable {
           target.push(byteFromBools(b, 0));
         }
       } else {
-        target.push(tags.MAP_);
-        encodeUInt(keysetIndex, target);
+        target.push(tags.MAP);
+        this.encodeValue(keys, target, enabledExtensions);
 
         keys.forEach(key => this.encodeValue(value[key], target, enabledExtensions));
       }
