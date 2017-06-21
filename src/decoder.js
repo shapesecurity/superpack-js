@@ -222,6 +222,7 @@ export default class Decoder extends Extendable {
 
       default:
         // This should never happen.
+        /* istanbul ignore next */
         throw new Error('Unknown case');
     }
   }

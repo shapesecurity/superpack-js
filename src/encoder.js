@@ -33,9 +33,7 @@ function encodeUInt(value, target) {
 }
 
 function encodeInteger(value, target) {
-  if (value === 0 && 1 / value === -Infinity) {
-    target.push(tags.NINT4_BASE);
-  } else if (value >= 0) {
+  if (value >= 0) {
     encodeUInt(value, target);
   } else {
     let magnitude = -value;
@@ -98,6 +96,87 @@ function encodeString(str : string, target : SuperPackedValue) {
   }
 }
 
+/* istanbul ignore next */
+let encodeFloatFallback = (value: number, target : SuperPackedValue) : void => {
+  // eBits + mBits + 1 is a multiple of 8
+  let eBits = 11;
+  let mBits = 52;
+  let bias = (1 << (eBits - 1)) - 1;
+
+  let isNegative = value < 0 || value === 0 && 1 / value < 0;
+  let v = Math.abs(value);
+
+  let exp, mantissa;
+  if (v === 0) {
+    exp = bias;
+    mantissa = 0;
+  } else if (v >= Math.pow(2, 1 - bias)) {
+    // normal
+    exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
+    let significand = v / Math.pow(2, exp);
+    if (significand < 1) {
+      exp -= 1;
+      significand *= 2;
+    }
+    if (significand >= 2) {
+      exp += 1;
+      significand /= 2;
+    }
+    let mMax = Math.pow(2, mBits);
+    mantissa = roundToEven(significand * mMax) - mMax;
+    exp += bias;
+    if (mantissa / mMax >= 1) {
+      exp += 1;
+      mantissa = 0;
+    }
+    if (exp > 2 * bias) {
+      // overflow
+      exp = (1 << eBits) - 1;
+      mantissa = 0;
+    }
+  } else {
+    // subnormal
+    exp = 0;
+    mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
+  }
+
+  let tag = tags.DOUBLE64;
+
+  // see if this can be represented using a FLOAT32 without dropping any significant bits
+  if ((mantissa & 0x1FFFFFFF) === 0 && Math.abs(exp - bias) < 256) {
+    tag = tags.FLOAT32;
+    eBits = 8;
+    mBits = 23;
+    mantissa /= 0x1FFFFFFF;
+    exp += bias;
+    bias = (1 << (eBits - 1)) - 1;
+    exp -= bias;
+    if (v < Math.pow(2, 1 - bias)) {
+      // subnormal
+      exp = 0;
+      mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
+    }
+  }
+
+  // align sign, exponent, mantissa
+  let bits = [];
+  for (let i = mBits - 1; i >= 0; --i) {
+    bits.unshift(mantissa & 1);
+    mantissa = Math.floor(mantissa / 2);
+  }
+  for (let i = eBits; i > 0; i -= 1) {
+    bits.unshift(exp & 1);
+    exp = Math.floor(exp / 2);
+  }
+  bits.unshift(isNegative ? 1 : 0);
+
+  target.push(tag);
+  // pack into bytes
+  for (let i = 0; i < bits.length; i += 8) {
+    target.push(byteFromBools(bits, i));
+  }
+};
+
 let encodeFloat =
   (typeof Float32Array === 'function' && typeof Float64Array === 'function' && typeof Uint8Array === 'function')
     ? ((value: number, target : SuperPackedValue) : void => {
@@ -115,85 +194,7 @@ let encodeFloat =
         target.push(u[i]);
       }
     })
-    : (value: number, target : SuperPackedValue) : void => {
-      // eBits + mBits + 1 is a multiple of 8
-      let eBits = 11;
-      let mBits = 52;
-      let bias = (1 << (eBits - 1)) - 1;
-
-      let isNegative = value < 0 || value === 0 && 1 / value < 0;
-      let v = Math.abs(value);
-
-      let exp, mantissa;
-      if (v === 0) {
-        exp = bias;
-        mantissa = 0;
-      } else if (v >= Math.pow(2, 1 - bias)) {
-        // normal
-        exp = Math.min(Math.floor(Math.log(v) / Math.LN2), 1023);
-        let significand = v / Math.pow(2, exp);
-        if (significand < 1) {
-          exp -= 1;
-          significand *= 2;
-        }
-        if (significand >= 2) {
-          exp += 1;
-          significand /= 2;
-        }
-        let mMax = Math.pow(2, mBits);
-        mantissa = roundToEven(significand * mMax) - mMax;
-        exp += bias;
-        if (mantissa / mMax >= 1) {
-          exp += 1;
-          mantissa = 0;
-        }
-        if (exp > 2 * bias) {
-          // overflow
-          exp = (1 << eBits) - 1;
-          mantissa = 0;
-        }
-      } else {
-        // subnormal
-        exp = 0;
-        mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
-      }
-
-      let tag = tags.DOUBLE64;
-
-      // see if this can be represented using a FLOAT32 without dropping any significant bits
-      if ((mantissa & 0x1FFFFFFF) === 0 && Math.abs(exp - bias) < 256) {
-        tag = tags.FLOAT32;
-        eBits = 8;
-        mBits = 23;
-        mantissa /= 0x1FFFFFFF;
-        exp += bias;
-        bias = (1 << (eBits - 1)) - 1;
-        exp -= bias;
-        if (v < Math.pow(2, 1 - bias)) {
-          // subnormal
-          exp = 0;
-          mantissa = roundToEven(v / Math.pow(2, (1 - bias) - mBits));
-        }
-      }
-
-      // align sign, exponent, mantissa
-      let bits = [];
-      for (let i = mBits - 1; i >= 0; --i) {
-        bits.unshift(mantissa & 1);
-        mantissa = Math.floor(mantissa / 2);
-      }
-      for (let i = eBits; i > 0; i -= 1) {
-        bits.unshift(exp & 1);
-        exp = Math.floor(exp / 2);
-      }
-      bits.unshift(isNegative ? 1 : 0);
-
-      target.push(tag);
-      // pack into bytes
-      for (let i = 0; i < bits.length; i += 8) {
-        target.push(byteFromBools(bits, i));
-      }
-    };
+    : /* istanbul ignore next */ encodeFloatFallback;
 
 
 function isANaNValue(value) { // eslint-disable-line no-shadow
@@ -215,6 +216,7 @@ function pushUInt32(n, target) {
   target.push(n >>> 24, (n >> 16) & F2, (n >> 8) & F2, n & F2);
 }
 
+/* istanbul ignore next */
 function roundToEven(n) {
   let w = Math.floor(n), f = n - w;
   if (f < 0.5) return w;

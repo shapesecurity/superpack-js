@@ -14,7 +14,8 @@ module.exports = {
     debug: true,
     transform: [
       babelify.configure({
-        presets: ['es2015']
+        presets: ['es2015'],
+        auxiliaryCommentBefore: ' istanbul ignore next ',
       }),
       istanbul({
         ignore: ['**/test/**'],
@@ -27,7 +28,8 @@ module.exports = {
 
   coverageReporter: {
     reporters: [
-      { type: 'text', dir: 'build/coverage/' }
+      { type: 'text', dir: 'build/coverage/' },
+      { type: 'html', dir: 'build/coverage/' },
     ],
     check: {
       global: {
