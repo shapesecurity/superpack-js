@@ -5,8 +5,11 @@ import tags from './type-tags.js';
 import Extendable from './extendable.js';
 import type { ExtensionMap, ExtensionPoint } from './extendable.js';
 
-// TODO: refactor string encoding (a la superpack-java) so that this can be just Array<number>
-type SuperPackedValue = Array<number | string>;
+type ExtensionPlaceholder = { value: any, extensionPoint: ExtensionPoint };
+
+type Byte = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 | 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 | 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 | 64 | 65 | 66 | 67 | 68 | 69 | 70 | 71 | 72 | 73 | 74 | 75 | 76 | 77 | 78 | 79 | 80 | 81 | 82 | 83 | 84 | 85 | 86 | 87 | 88 | 89 | 90 | 91 | 92 | 93 | 94 | 95 | 96 | 97 | 98 | 99 | 100 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114 | 115 | 116 | 117 | 118 | 119 | 120 | 121 | 122 | 123 | 124 | 125 | 126 | 127 | 128 | 129 | 130 | 131 | 132 | 133 | 134 | 135 | 136 | 137 | 138 | 139 | 140 | 141 | 142 | 143 | 144 | 145 | 146 | 147 | 148 | 149 | 150 | 151 | 152 | 153 | 154 | 155 | 156 | 157 | 158 | 159 | 160 | 161 | 162 | 163 | 164 | 165 | 166 | 167 | 168 | 169 | 170 | 171 | 172 | 173 | 174 | 175 | 176 | 177 | 178 | 179 | 180 | 181 | 182 | 183 | 184 | 185 | 186 | 187 | 188 | 189 | 190 | 191 | 192 | 193 | 194 | 195 | 196 | 197 | 198 | 199 | 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207 | 208 | 209 | 210 | 211 | 212 | 213 | 214 | 215 | 216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 | 224 | 225 | 226 | 227 | 228 | 229 | 230 | 231 | 232 | 233 | 234 | 235 | 236 | 237 | 238 | 239 | 240 | 241 | 242 | 243 | 244 | 245 | 246 | 247 | 248 | 249 | 250 | 251 | 252 | 253 | 254 | 255;
+type SuperPackedValue = Array<Byte>;
+type SuperPackedValueWithPlaceholders = Array<number | ExtensionPlaceholder>;
 
 const F16 = 0xFFFFFFFFFFFFFFFF;
 const F8 = 0xFFFFFFFF;
@@ -63,7 +66,7 @@ function encodeDate(value, target) {
   pushUInt32(timestamp >>> 0, target);
 }
 
-function encodeString(str : string, target : SuperPackedValue) {
+function encodeString(str : string, target : SuperPackedValueWithPlaceholders) {
   // Note: this encoding fails if value contains an unmatched surrogate half.
   // utf8Ascii will be an ascii representation of UTF-8 bytes
   // ref: http://monsur.hossa.in/2012/07/20/utf-8-in-javascript.html
@@ -97,7 +100,7 @@ function encodeString(str : string, target : SuperPackedValue) {
 }
 
 /* istanbul ignore next */
-let encodeFloatFallback = (value: number, target : SuperPackedValue) : void => {
+let encodeFloatFallback = (value: number, target : SuperPackedValueWithPlaceholders) : void => {
   // eBits + mBits + 1 is a multiple of 8
   let eBits = 11;
   let mBits = 52;
@@ -161,14 +164,14 @@ let encodeFloatFallback = (value: number, target : SuperPackedValue) : void => {
   // align sign, exponent, mantissa
   let bits = [];
   for (let i = mBits - 1; i >= 0; --i) {
-    bits.unshift(mantissa & 1);
+    bits.unshift(!!(mantissa & 1));
     mantissa = Math.floor(mantissa / 2);
   }
   for (let i = eBits; i > 0; i -= 1) {
-    bits.unshift(exp & 1);
+    bits.unshift(!!(exp & 1));
     exp = Math.floor(exp / 2);
   }
-  bits.unshift(isNegative ? 1 : 0);
+  bits.unshift(isNegative);
 
   target.push(tag);
   // pack into bytes
@@ -179,7 +182,7 @@ let encodeFloatFallback = (value: number, target : SuperPackedValue) : void => {
 
 let encodeFloat =
   (typeof Float32Array === 'function' && typeof Float64Array === 'function' && typeof Uint8Array === 'function')
-    ? ((value: number, target : SuperPackedValue) : void => {
+    ? ((value: number, target : SuperPackedValueWithPlaceholders) : void => {
       let tag = tags.FLOAT32;
       let f = new Float32Array(1);
       f[0] = value;
@@ -201,15 +204,15 @@ function isANaNValue(value) { // eslint-disable-line no-shadow
   return value !== value; // eslint-disable-line no-self-compare
 }
 
-function byteFromBools(bools, offset) {
-  return bools[offset] << 7 |
-    bools[offset + 1] << 6 |
-    bools[offset + 2] << 5 |
-    bools[offset + 3] << 4 |
-    bools[offset + 4] << 3 |
-    bools[offset + 5] << 2 |
-    bools[offset + 6] << 1 |
-    bools[offset + 7];
+function byteFromBools(bools: Array<boolean>, offset: number): number {
+  return +bools[offset] << 7 |
+    +bools[offset + 1] << 6 |
+    +bools[offset + 2] << 5 |
+    +bools[offset + 3] << 4 |
+    +bools[offset + 4] << 3 |
+    +bools[offset + 5] << 2 |
+    +bools[offset + 6] << 1 |
+    +bools[offset + 7];
 }
 
 function pushUInt32(n, target) {
@@ -234,8 +237,11 @@ function find(arrayLike, predicate) {
 
 
 export default class Encoder extends Extendable {
+  placeholderMap : { [extensionPoint : ExtensionPoint] : Array<ExtensionPlaceholder> }
+
   constructor() {
     super();
+    this.placeholderMap = Object.create(null);
   }
 
   static encode(value : any, options? : { extensions? : ExtensionMap } = {}) : SuperPackedValue {
@@ -253,48 +259,69 @@ export default class Encoder extends Extendable {
   encode(value : any) : SuperPackedValue {
     this.initialiseExtensions();
 
-    let data = this.encodeValue(value, []);
-
-    let enabledExtensions = Object.keys(this.extensions).map(e => +e).sort().reverse();
-    enabledExtensions
-      .filter(e => typeof this.extensions[e].memo === 'function')
-      .forEach(e => {
-        // $FlowFixMe: this.extensions[e].memo is a function
-        let memoObj = this.extensions[e].memo(), memoBytes = [];
-        enabledExtensions.splice(enabledExtensions.indexOf(e), 1);
-        this.encodeValue(memoObj, memoBytes, enabledExtensions);
-        data = memoBytes.concat(data);
-      });
-
-    return data;
+    let bytesWithPlaceholders = this.encodeValue(value, []);
+    return this.replaceExtensionPlaceholders(bytesWithPlaceholders);
   }
 
   /* begin private use area */
 
-  pushArrayElements(value : any, target : SuperPackedValue, enabledExtensions?: Array<ExtensionPoint>) {
+  pushArrayElements(value : any, target : SuperPackedValueWithPlaceholders, enabledExtensions?: Array<ExtensionPoint>) {
     [].forEach.call(value, element => {
       this.encodeValue(element, target, enabledExtensions);
     });
   }
 
-  encodeValue(value: any, target: Array<number | string>, enabledExtensions?: Array<ExtensionPoint>) {
+  replaceExtensionPlaceholders(target: SuperPackedValueWithPlaceholders) : SuperPackedValue {
+    let enabledExtensions = Object.keys(this.extensions).map(e => +e).sort();
+    while (enabledExtensions.length > 0) {
+      let extensionPoint = enabledExtensions.pop();
+      let extension = this.extensions[extensionPoint];
+
+      if ({}.hasOwnProperty.call(this.placeholderMap, extensionPoint)) {
+        this.placeholderMap[extensionPoint].forEach(placeholder => {
+          let extTarget = [];
+          if (extensionPoint < 8) {
+            extTarget.push(tags.EXTENSION3_BASE | extensionPoint);
+          } else {
+            extTarget.push(tags.EXTENSION_);
+            encodeUInt(extensionPoint, extTarget);
+          }
+
+          this.encodeValue(extension.serialiser(placeholder.value), extTarget, enabledExtensions);
+          target.splice(target.indexOf(placeholder), 1, ...extTarget);
+        });
+      }
+
+      if (typeof extension.memo === 'function') {
+        target.unshift(...this.encodeValue(extension.memo(), [], enabledExtensions));
+      }
+    }
+
+    return ((target : any) : SuperPackedValue);
+  }
+
+  addToPlaceholderMap(placeholder : ExtensionPlaceholder) : void {
+    let ext = placeholder.extensionPoint;
+    if ({}.hasOwnProperty.call(this.placeholderMap, ext)) {
+      this.placeholderMap[ext].push(placeholder);
+    } else {
+      this.placeholderMap[ext] = [placeholder];
+    }
+  }
+
+  encodeValue(value: any, target: SuperPackedValueWithPlaceholders, enabledExtensions?: Array<ExtensionPoint>) {
     let ext = find(
       enabledExtensions || Object.keys(this.extensions),
       // $FlowFixMe: flow doesn't understand that e is an ExtensionPoint
       (e : ExtensionPoint) => this.extensions[e].detector(value)
     );
     if (ext != null) {
-      if (+ext < 8) {
-        target.push(tags.EXTENSION3_BASE | +ext);
-      } else {
-        target.push(tags.EXTENSION_);
-        encodeUInt(+ext, target);
-      }
-      let furtherExtensions = enabledExtensions == null
-        ? Object.keys(this.extensions).map(e => +e)
-        : enabledExtensions.slice();
-      furtherExtensions.splice(furtherExtensions.indexOf(+ext), 1);
-      this.encodeValue(this.extensions[+ext].serialiser(value), target, furtherExtensions);
+      let placeholder = ({
+        value,
+        extensionPoint: +ext,
+      } : ExtensionPlaceholder);
+      this.addToPlaceholderMap(placeholder);
+      target.push(placeholder);
     } else if (value === false) {
       target.push(tags.FALSE);
     } else if (value === true) {
@@ -306,7 +333,7 @@ export default class Encoder extends Extendable {
     } else if (typeof value === 'number') {
       if (isFinite(value)) {
         let v = Math.abs(value);
-        if (Math.floor(v) === v && v < F16 && (v !== 0 || 1 / value > 0)) {
+        if (Math.floor(v) === v && v <= F16 && (v !== 0 || 1 / value > 0)) {
           encodeInteger(value, target);
         } else {
           encodeFloat(value, target);
@@ -364,10 +391,9 @@ export default class Encoder extends Extendable {
         target.push(tags.BMAP);
         this.encodeValue(keys, target, enabledExtensions);
 
-        let b = [0, 0, 0, 0, 0, 0, 0, 0];
+        let b = [false, false, false, false, false, false, false, false];
         for (let i = 0; i < numKeys; i += 8) {
           for (let j = 0; j < 8; ++j) {
-            // $FlowFixMe: flow doesn't like our fancy hacks
             b[j] = i + j < numKeys && value[keys[i + j]];
           }
           target.push(byteFromBools(b, 0));

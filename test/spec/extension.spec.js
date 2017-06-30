@@ -287,48 +287,48 @@ describe('extension', function () {
       expect(encoded).to.be.eql([
         // memo for number interning extension
         types.ARRAY5_BASE | 6,
-          0, // the index of "a" in the identities table
-          1, // the index of "b" in the identities table
           types.UINT24, 15, 66, 54, // 999990
           types.UINT24, 15, 66, 55, // 999991
           types.UINT24, 15, 66, 56, // 999992
           types.UINT24, 15, 66, 57, // 999993
+          0, // the index of "a" in the identities table
+          1, // the index of "b" in the identities table
 
         // memo for object identity preservation extension
         types.ARRAY5_BASE | 2,
           types.MAP,
             types.ARRAY5_BASE | 1,
               types.STR5_BASE | 1, 'a'.charCodeAt(0),
-            types.EXTENSION3_BASE, 2,
+            types.EXTENSION3_BASE, 0,
           types.MAP,
             types.ARRAY5_BASE | 1,
               types.STR5_BASE | 1, 'b'.charCodeAt(0),
-            types.EXTENSION3_BASE, 2,
+            types.EXTENSION3_BASE, 0,
 
         types.ARRAY5_BASE | 6,
           types.EXTENSION3_BASE | 1,
-            types.EXTENSION3_BASE, 0,
+            types.EXTENSION3_BASE, 4,
           types.EXTENSION3_BASE | 1,
-            types.EXTENSION3_BASE, 0,
+            types.EXTENSION3_BASE, 4,
           types.EXTENSION3_BASE | 1,
-            types.EXTENSION3_BASE, 1,
+            types.EXTENSION3_BASE, 5,
           types.MAP,
             types.ARRAY5_BASE | 1,
               types.STR5_BASE | 1, 'a'.charCodeAt(0),
             types.EXTENSION3_BASE | 1,
-              types.EXTENSION3_BASE, 0,
+              types.EXTENSION3_BASE, 4,
           types.EXTENSION3_BASE | 1,
-            types.EXTENSION3_BASE, 1,
+            types.EXTENSION3_BASE, 5,
           types.MAP,
             types.ARRAY5_BASE | 4,
               types.STR5_BASE | 1, 'a'.charCodeAt(0),
               types.STR5_BASE | 1, 'b'.charCodeAt(0),
               types.STR5_BASE | 1, 'c'.charCodeAt(0),
               types.STR5_BASE | 1, 'd'.charCodeAt(0),
+            types.EXTENSION3_BASE, 0,
+            types.EXTENSION3_BASE, 1,
             types.EXTENSION3_BASE, 2,
             types.EXTENSION3_BASE, 3,
-            types.EXTENSION3_BASE, 4,
-            types.EXTENSION3_BASE, 5,
       ]);
       let decoded = decode(encoded, { extensions });
 
