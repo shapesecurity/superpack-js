@@ -33,7 +33,7 @@ export default class Decoder extends Extendable {
         d.extend(ext, extensions[ext]);
       });
     }
-    return d.decode(buffer, options);
+    return d.decode(buffer);
   }
 
   decode(buffer : SuperPackedValue) : any {

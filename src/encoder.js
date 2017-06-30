@@ -253,7 +253,7 @@ export default class Encoder extends Extendable {
         e.extend(ext, extensions[ext]);
       });
     }
-    return e.encode(value, options);
+    return e.encode(value);
   }
 
   encode(value : any) : SuperPackedValue {
