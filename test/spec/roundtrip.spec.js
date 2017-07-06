@@ -37,52 +37,44 @@ function toUint32(a, b, c, d) {
 
 
 describe('floating point values', function () {
-  describe('single-precision (binary32)', function () {
+  it('can round-trip single-precision floats (binary32)', function () {
     floats.forEach(([n, i]) => {
       let actualBits = showBits(i, 32);
       let encoded = encode(n);
 
-      it(`should properly encode ${n} (${actualBits})`, function () {
-        expect(encoded[0]).to.be.equal(types.FLOAT32);
-        expect(encoded.length).to.be.equal(5);
-        let encodedBits = showBits(toUint32(encoded[1], encoded[2], encoded[3], encoded[4]), 32);
-        expect(encodedBits).to.be.equal(actualBits);
-      });
+      expect(encoded[0]).to.be.equal(types.FLOAT32, `${n} (${actualBits}) encodes as FLOAT32`)
+      expect(encoded.length).to.be.equal(5);
+      let encodedBits = showBits(toUint32(encoded[1], encoded[2], encoded[3], encoded[4]), 32);
+      expect(encodedBits).to.be.equal(actualBits, `${n} (${actualBits}) encodes as expected`);
 
       let decoded = decode(encoded);
       let doubleEncoded = encode(decoded);
-      it(`should round-trip ${n} (${actualBits})`, function () {
-        let doubleEncodedBits = showBits(toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]), 32);
-        expect(doubleEncodedBits).to.be.equal(actualBits);
-        expect(n).to.be.equal(decoded);
-      });
+      let doubleEncodedBits = showBits(toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]), 32);
+      expect(doubleEncodedBits).to.be.equal(actualBits, `${n} (${actualBits})`);
+      expect(n).to.be.equal(decoded, `${n} (${actualBits}) successfully round-trips`);
     });
   });
 
-  describe('double-precision (binary64)', function () {
+  it('can round-trip double-precision floats (binary64)', function () {
     doubles.forEach(([n, high, low]) => {
       let actualBits = showBits(high, 32) + showBits(low, 32);
       let encoded = encode(n);
       if (encoded[0] === types.FLOAT32) return;
 
-      it(`should properly encode ${n} (${actualBits})`, function () {
-        expect(encoded[0]).to.be.equal(types.DOUBLE64);
-        expect(encoded.length).to.be.equal(9);
-        let h = toUint32(encoded[1], encoded[2], encoded[3], encoded[4]);
-        let l = toUint32(encoded[5], encoded[6], encoded[7], encoded[8]);
-        let encodedBits = `${showBits(h, 32)}${showBits(l, 32)}`;
-        expect(encodedBits).to.be.equal(actualBits);
-      });
+      expect(encoded[0]).to.be.equal(types.DOUBLE64, `${n} (${actualBits}) encodes as DOUBLE64`);
+      expect(encoded.length).to.be.equal(9);
+      let h0 = toUint32(encoded[1], encoded[2], encoded[3], encoded[4]);
+      let l0 = toUint32(encoded[5], encoded[6], encoded[7], encoded[8]);
+      let encodedBits = `${showBits(h0, 32)}${showBits(l0, 32)}`;
+      expect(encodedBits).to.be.equal(actualBits, `${n} (${actualBits}) encodes as expected`);
 
       let decoded = decode(encoded);
       let doubleEncoded = encode(decoded);
-      it(`should round-trip ${n} (${actualBits})`, function () {
-        let h = toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]);
-        let l = toUint32(doubleEncoded[5], doubleEncoded[6], doubleEncoded[7], doubleEncoded[8]);
-        let doubleEncodedBits = `${showBits(h, 32)}${showBits(l, 32)}`;
-        expect(doubleEncodedBits).to.be.equal(actualBits);
-        expect(n).to.be.equal(decoded);
-      });
+      let h1 = toUint32(doubleEncoded[1], doubleEncoded[2], doubleEncoded[3], doubleEncoded[4]);
+      let l1 = toUint32(doubleEncoded[5], doubleEncoded[6], doubleEncoded[7], doubleEncoded[8]);
+      let doubleEncodedBits = `${showBits(h1, 32)}${showBits(l1, 32)}`;
+      expect(doubleEncodedBits).to.be.equal(actualBits);
+      expect(n).to.be.equal(decoded, `${n} (${actualBits}) successfully round-trips`);
     });
   });
 });
