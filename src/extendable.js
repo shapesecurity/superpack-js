@@ -2,22 +2,22 @@
 
 export type ExtensionPoint = number;
 
-class Extension {
-  detector : any => boolean
-  serialiser : any => any
-  deserialiser : (a : any, memo : ?any) => any
-  memo : ?(() => any)
+export interface Extension<-A, -B, +Memo = void> {
+  detector : any => boolean,
+  serialiser : A => B,
+  deserialiser : (x : B, memo : Memo) => A,
+  memo : ?(() => Memo),
 }
 
 export type ExtensionMap = {
-  [extensionPoint : ExtensionPoint] : Class<Extension>,
+  [extensionPoint : ExtensionPoint] : Class<Extension<any, any, any>>,
 };
 
 export default class Extendable {
   extensionCtors : ExtensionMap
 
   extensions : {
-    [extensionPoint : ExtensionPoint] : Extension,
+    [extensionPoint : ExtensionPoint] : Extension<any, any, any>,
   }
 
   constructor() {
@@ -31,7 +31,7 @@ export default class Extendable {
     });
   }
 
-  extend(extensionPoint : ExtensionPoint, extension : Class<Extension>) {
+  extend(extensionPoint : ExtensionPoint, extension : Class<Extension<any, any, any>>) {
     this.extensionCtors[extensionPoint] = extension;
   }
 }
