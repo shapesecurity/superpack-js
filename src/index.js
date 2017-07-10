@@ -12,8 +12,8 @@ export default class Transcoder {
   encoder : Encoder
   decoder : Decoder
 
-  static optimisations : { [ name : string ]: Class<Extension<any, any, any>> }
-  static recommendedOptimisations : Array<Class<Extension<any, any, any>>>
+  static optimisations : { [ name : string ]: Class<Extension<*, *, *>> }
+  static recommendedOptimisations : Array<Class<Extension<*, *, *>>>
 
   constructor() {
     this.encoder = new Encoder;
