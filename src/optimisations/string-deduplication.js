@@ -1,4 +1,4 @@
-/* global Class */
+    // eslint-disable-next-line
 type StringHistogram = { [s : string] : number };
 
 import type { Extension } from '../extendable.js';
@@ -36,7 +36,6 @@ export default class StringDeduplicationOptimisation implements Extension<string
 
   generateStringLUT(): void {
     this.stringLUT = Object.keys(this.stringHist)
-      .filter(key => this.stringHist[key] >= 2)
       // [key, expected savings]
       .map(key => [key, ((key.length + 1) * this.stringHist[key]) - (key.length + 1 + this.stringHist[key])])
       .sort((e1, e2) => e2[1] - e1[1])
