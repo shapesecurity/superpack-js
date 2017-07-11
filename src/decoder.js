@@ -128,7 +128,7 @@ export default class Decoder extends Extendable {
       return this.readString(type - tags.STR5_BASE);
     } else if (within(type, tags.EXTENSION3_BASE, 3)) {
       let ext : ExtensionPoint = type - tags.EXTENSION3_BASE;
-      return this.extensions[ext].deserialiser(this.decodeValue(), this.memos[ext]);
+      return this.extensions[ext].deserialise(this.decodeValue(), this.memos[ext]);
     }
     switch (type) {
       case tags.FALSE: return false;
@@ -216,7 +216,7 @@ export default class Decoder extends Extendable {
 
       case tags.EXTENSION: {
         let ext : ExtensionPoint = this.decodeValue();
-        return this.extensions[ext].deserialiser(this.decodeValue(), this.memos[ext]);
+        return this.extensions[ext].deserialise(this.decodeValue(), this.memos[ext]);
       }
 
       default:

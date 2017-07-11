@@ -1,4 +1,3 @@
-    // eslint-disable-next-line
 type StringHistogram = { [s : string] : number };
 
 import type { Extension } from '../extendable.js';
@@ -11,7 +10,7 @@ export default class StringDeduplicationOptimisation implements Extension<string
     this.stringHist = Object.create(null);
   }
 
-  detector(x : any) : boolean {
+  isCandidate(x : any) : boolean {
     if (typeof x === 'string') {
       this.stringHist[x] = (this.stringHist[x] || 0) + 1;
       return true;
@@ -19,14 +18,21 @@ export default class StringDeduplicationOptimisation implements Extension<string
     return false;
   }
 
-  serialiser(s : string) : number {
+  shouldSerialise(s : string) : boolean {
+    if (this.stringLUT == null) {
+      this.generateStringLUT();
+    }
+    return ((this.stringLUT : any) : Array<string>).indexOf(s) >= 0;
+  }
+
+  serialise(s : string) : number {
     if (this.stringLUT == null) {
       this.generateStringLUT();
     }
     return ((this.stringLUT : any) : Array<string>).indexOf(s);
   }
 
-  deserialiser(x : number, memo : Array<string>) : string {
+  deserialise(x : number, memo : Array<string>) : string {
     return memo[x];
   }
 
@@ -36,10 +42,10 @@ export default class StringDeduplicationOptimisation implements Extension<string
 
   generateStringLUT(): void {
     this.stringLUT = Object.keys(this.stringHist)
-      // [key, expected savings]
-      .map(key => [key, ((key.length + 1) * this.stringHist[key]) - (key.length + 1 + this.stringHist[key])])
-      .sort((e1, e2) => e2[1] - e1[1])
-      .map(elt => elt[0]);
+      // [str, expected savings]
+      .map(str => [str, ((str.length + 1) * this.stringHist[str]) - (str.length + 1 + this.stringHist[str])])
+      .filter(([, savings]) => savings > 0)
+      .sort(([, savings1], [, savings2]) => savings2 - savings1)
+      .map(([str]) => str);
   }
 }
-

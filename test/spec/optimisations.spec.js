@@ -39,6 +39,25 @@ describe('built-in optimisations', function () {
       expect(decoded).to.be.eql(data);
     });
 
+    it('does not memoise strings which appear only once', function () {
+      let extensions = {
+        0: StringDeduplicationOptimisation,
+      };
+
+      let data = ['abc', 'abc', 'def'];
+      let encoded = encode(data, { extensions });
+      expect(encoded).to.be.eql([
+        types.ARRAY5_BASE | 1,
+          types.STR5_BASE | 3, ...charCodes('abc'),
+        types.ARRAY5_BASE | 3,
+          types.EXTENSION3_BASE, 0,
+          types.EXTENSION3_BASE, 0,
+          types.STR5_BASE | 3, ...charCodes('def'),
+      ]);
+      let decoded = decode(encoded, { extensions });
+      expect(decoded).to.be.eql(data);
+    });
+
     it('prioritises by amount saved', function () {
       let extensions = {
         0: StringDeduplicationOptimisation,

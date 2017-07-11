@@ -4,9 +4,10 @@ export type ExtensionPoint = number;
 
 export interface Extension<-A, -B, +Memo = void> {
   constructor(): Extension<A, B, Memo>;
-  detector(any) : boolean;
-  serialiser(A) : B;
-  deserialiser(x : B, memo : Memo) : A;
+  isCandidate(any) : boolean;
+  +shouldSerialise: ?(A => boolean);
+  serialise(A) : B;
+  deserialise(x : B, memo : Memo) : A;
   +memo: ?(() => Memo);
 }
 

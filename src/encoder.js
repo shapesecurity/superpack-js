@@ -279,14 +279,17 @@ export default class Encoder extends Extendable {
       if ({}.hasOwnProperty.call(this.placeholderMap, extensionPoint)) {
         this.placeholderMap[extensionPoint].forEach(placeholder => {
           let extTarget = [];
-          if (extensionPoint < 8) {
-            extTarget.push(tags.EXTENSION3_BASE | extensionPoint);
+          if (extension.shouldSerialise == null || extension.shouldSerialise(placeholder.value)) {
+            if (extensionPoint < 8) {
+              extTarget.push(tags.EXTENSION3_BASE | extensionPoint);
+            } else {
+              extTarget.push(tags.EXTENSION_);
+              encodeUInt(extensionPoint, extTarget);
+            }
+            this.encodeValue(extension.serialise(placeholder.value), extTarget, enabledExtensions);
           } else {
-            extTarget.push(tags.EXTENSION_);
-            encodeUInt(extensionPoint, extTarget);
+            this.encodeValue(placeholder.value, extTarget, enabledExtensions);
           }
-
-          this.encodeValue(extension.serialiser(placeholder.value), extTarget, enabledExtensions);
           target.splice(target.indexOf(placeholder), 1, ...extTarget);
         });
       }
@@ -312,7 +315,7 @@ export default class Encoder extends Extendable {
     let ext = find(
       enabledExtensions || Object.keys(this.extensions),
       // $FlowFixMe: flow doesn't understand that e is an ExtensionPoint
-      (e : ExtensionPoint) => this.extensions[e].detector(value)
+      (e : ExtensionPoint) => this.extensions[e].isCandidate(value)
     );
     if (ext != null) {
       let placeholder = ({

@@ -17,11 +17,11 @@ describe('extension', function () {
       0,
       class {
         // detect values which require this custom serialisation
-        detector(x) { return  x instanceof RegExp; }
-        // serialiser: return an intermediate value which will be encoded instead
-        serialiser(r) { return [r.source, getFlags(r)]; }
-        // deserialiser: from the intermediate value, reconstruct the original value
-        deserialiser([source, flags]) { return RegExp(source, flags); }
+        isCandidate(x) { return  x instanceof RegExp; }
+        // serialise: return an intermediate value which will be encoded instead
+        serialise(r) { return [r.source, getFlags(r)]; }
+        // deserialise: from the intermediate value, reconstruct the original value
+        deserialise([source, flags]) { return RegExp(source, flags); }
       }
     );
 
@@ -42,11 +42,11 @@ describe('extension', function () {
     let extensions = {
       0: class {
         // detect values which require this custom serialisation
-        detector(x) { return x instanceof RegExp; }
-        // serialiser: return an intermediate value which will be encoded instead
-        serialiser(r) { return [r.source, getFlags(r)]; }
-        // deserialiser: from the intermediate value, reconstruct the original value
-        deserialiser([source, flags]) { return RegExp(source, flags); }
+        isCandidate(x) { return x instanceof RegExp; }
+        // serialise: return an intermediate value which will be encoded instead
+        serialise(r) { return [r.source, getFlags(r)]; }
+        // deserialise: from the intermediate value, reconstruct the original value
+        deserialise([source, flags]) { return RegExp(source, flags); }
       },
     };
 
@@ -67,11 +67,11 @@ describe('extension', function () {
     let extensions = {
       0: class {
         // detect values which require this custom serialisation
-        detector(x) { return Math.floor(x) === x; }
-        // serialiser: return an intermediate value which will be encoded instead
-        serialiser(n) { return '' + (n + 1); }
-        // deserialiser: from the intermediate value, reconstruct the original value
-        deserialiser(n) { return parseInt(n) - 1; }
+        isCandidate(x) { return Math.floor(x) === x; }
+        // serialise: return an intermediate value which will be encoded instead
+        serialise(n) { return '' + (n + 1); }
+        // deserialise: from the intermediate value, reconstruct the original value
+        deserialise(n) { return parseInt(n) - 1; }
       },
     };
 
@@ -92,13 +92,13 @@ describe('extension', function () {
           constructor() {
             this.strings = [];
           }
-          detector(x) { return typeof x === 'string'; }
-          serialiser(s) {
+          isCandidate(x) { return typeof x === 'string'; }
+          serialise(s) {
             let i = this.strings.indexOf(s);
             if (i >= 0) return i;
             return this.strings.push(s) - 1;
           }
-          deserialiser(n, memo) { return memo[n]; }
+          deserialise(n, memo) { return memo[n]; }
           memo() { return this.strings; }
         },
       };
@@ -130,9 +130,9 @@ describe('extension', function () {
         return {
           registerIdentity(x) { identities.push(x); },
           extension: class {
-            detector(x) { return identities.indexOf(x) >= 0; }
-            serialiser(o) { return identities.indexOf(o); }
-            deserialiser(n, memo) { return memo[n]; }
+            isCandidate(x) { return identities.indexOf(x) >= 0; }
+            serialise(o) { return identities.indexOf(o); }
+            deserialise(n, memo) { return memo[n]; }
             memo() { return identities; }
           }
         };
@@ -205,13 +205,13 @@ describe('extension', function () {
           constructor() {
             this.symbols = [];
           }
-          detector(x) { return typeof x === 'symbol' || x && x.constructor === Symbol; }
-          serialiser(s) {
+          isCandidate(x) { return typeof x === 'symbol' || x && x.constructor === Symbol; }
+          serialise(s) {
             let i = this.symbols.indexOf(s);
             if (i >= 0) return i;
             return this.symbols.push(s) - 1;
           }
-          deserialiser(n, memo) {
+          deserialise(n, memo) {
             if (this.symbols[n] == null) {
               let s = Symbol(memo[n]);
               this.symbols[n] = s;
@@ -250,9 +250,9 @@ describe('extension', function () {
         return {
           registerIdentity(x) { identities.push(x); },
           extension: class {
-            detector(x) { return identities.indexOf(x) >= 0; }
-            serialiser(o) { return identities.indexOf(o); }
-            deserialiser(n, memo) { return memo[n]; }
+            isCandidate(x) { return identities.indexOf(x) >= 0; }
+            serialise(o) { return identities.indexOf(o); }
+            deserialise(n, memo) { return memo[n]; }
             memo() { return identities; }
           }
         };
@@ -262,13 +262,13 @@ describe('extension', function () {
         constructor() {
           this.numbers = [];
         }
-        detector(x) { return typeof x === 'number'; }
-        serialiser(n) {
+        isCandidate(x) { return typeof x === 'number'; }
+        serialise(n) {
           let i = this.numbers.indexOf(n);
           if (i >= 0) return i;
           return this.numbers.push(n) - 1;
         }
-        deserialiser(n, memo) { return memo[n]; }
+        deserialise(n, memo) { return memo[n]; }
         memo() { return this.numbers; }
       };
 
