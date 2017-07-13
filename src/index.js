@@ -1,6 +1,7 @@
 import Encoder from './encoder.js';
 import Decoder from './decoder.js';
-import StringDeduplicationOptimisation from './optimisations/string-deduplication.js';
+import StringDeduplication from './optimisations/string-deduplication.js';
+import KeysetDeduplication from './optimisations/keyset-deduplication.js';
 
 import type { Extension } from './extendable.js';
 
@@ -38,11 +39,13 @@ Transcoder.encode = Encoder.encode;
 Transcoder.decode = Decoder.decode;
 
 Transcoder.optimisations = {
-  StringDeduplicationOptimisation,
+  StringDeduplication,
+  KeysetDeduplication,
 };
 
 Transcoder.recommendedOptimisations = [
-  StringDeduplicationOptimisation,
+  StringDeduplication,
+  KeysetDeduplication,
 ];
 
 export { default as Encoder, encode } from './encoder.js';
