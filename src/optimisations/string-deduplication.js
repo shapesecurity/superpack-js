@@ -26,6 +26,7 @@ export default class StringDeduplicationOptimisation implements Extension<string
   }
 
   serialise(s : string) : number {
+    /* istanbul ignore next */
     if (this.stringLUT == null) {
       this.generateStringLUT();
     }
@@ -37,6 +38,7 @@ export default class StringDeduplicationOptimisation implements Extension<string
   }
 
   memo(): Array<string> {
+    /* istanbul ignore next */
     return this.stringLUT || [];
   }
 

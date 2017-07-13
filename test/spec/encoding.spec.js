@@ -1,17 +1,8 @@
 'use strict';
 
 import { expect } from 'chai';
-import { encode } from '../..';
+import { encode } from '../../src/index';
 import cases from './cases';
-
-/*
-todos
-
-unicode strings
-timestamp
-big strings
-
-*/
 
 describe('encoding', function () {
   let categories = Object.keys(cases);

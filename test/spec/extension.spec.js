@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
-import SuperPackTranscoder, { encode, decode } from '../..';
-import types from '../../dist/cjs/type-tags';
+import SuperPackTranscoder, { encode, decode } from '../../src/index';
+import types from '../../src/type-tags';
 
 
 function getFlags(re) {

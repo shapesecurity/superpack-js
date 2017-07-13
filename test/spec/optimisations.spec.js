@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 
-import SuperPackTranscoder, { encode, decode } from '../..';
-import types from '../../dist/cjs/type-tags';
+import SuperPackTranscoder, { encode, decode } from '../../src/index';
+import types from '../../src/type-tags';
 
-import StringDeduplication from '../../dist/cjs/optimisations/string-deduplication.js';
-import KeysetDeduplication from '../../dist/cjs/optimisations/keyset-deduplication.js';
+import StringDeduplication from '../../src/optimisations/string-deduplication.js';
+import KeysetDeduplication from '../../src/optimisations/keyset-deduplication.js';
 
 function charCodes(string) {
   return string.split('').map(c => c.charCodeAt(0));
