@@ -130,7 +130,7 @@ describe('built-in optimisations', function () {
       expect(decoded).to.be.eql(data);
     });
 
-    it('does not memoise single-use keysets', function () {
+    it('also memoises single-use keysets', function () {
       let extensions = {
         0: KeysetDeduplication,
       };
@@ -138,10 +138,12 @@ describe('built-in optimisations', function () {
       let data = [{ abc: 1, def: 2 }, { abc: 3, def: 4 }, { abc: 5 }];
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
-        types.ARRAY5_BASE | 1,
+        types.ARRAY5_BASE | 2,
           types.ARRAY5_BASE | 2,
             types.STR5_BASE | 3, ...charCodes('abc'),
             types.STR5_BASE | 3, ...charCodes('def'),
+          types.ARRAY5_BASE | 1,
+            types.STR5_BASE | 3, ...charCodes('abc'),
         types.ARRAY5_BASE | 3,
           types.EXTENSION3_BASE,
             types.ARRAY5_BASE | 3,
@@ -153,10 +155,10 @@ describe('built-in optimisations', function () {
               0,
               3,
               4,
-          types.MAP,
-            types.ARRAY5_BASE | 1,
-              types.STR5_BASE | 3, ...charCodes('abc'),
-            5,
+          types.EXTENSION3_BASE,
+            types.ARRAY5_BASE | 2,
+              1,
+              5,
       ]);
       let decoded = decode(encoded, { extensions });
       expect(decoded).to.be.eql(data);
@@ -167,23 +169,22 @@ describe('built-in optimisations', function () {
         0: KeysetDeduplication,
       };
 
-      let data = [{ abc: 1, def: { abc: 2, def: 3 } }];
+      let data = { abc: 1, def: { abc: 2, def: 3 } };
       let encoded = encode(data, { extensions });
       expect(encoded).to.be.eql([
         types.ARRAY5_BASE | 1,
           types.ARRAY5_BASE | 2,
             types.STR5_BASE | 3, ...charCodes('abc'),
             types.STR5_BASE | 3, ...charCodes('def'),
-        types.ARRAY5_BASE | 2,
-          types.EXTENSION3_BASE,
-            types.ARRAY5_BASE | 3,
-              0,
-              1,
-              types.EXTENSION3_BASE,
-                types.ARRAY5_BASE | 3,
-                  0,
-                  2,
-                  3,
+        types.EXTENSION3_BASE,
+          types.ARRAY5_BASE | 3,
+            0,
+            1,
+            types.EXTENSION3_BASE,
+              types.ARRAY5_BASE | 3,
+                0,
+                2,
+                3,
       ]);
       let decoded = decode(encoded, { extensions });
       expect(decoded).to.be.eql(data);
@@ -202,10 +203,12 @@ describe('built-in optimisations', function () {
       expect(encoded).to.be.eql([
         types.ARRAY5_BASE | 1,
           types.STR5_BASE | 3, ...charCodes('abc'),
-        types.ARRAY5_BASE | 1,
+        types.ARRAY5_BASE | 2,
           types.ARRAY5_BASE | 2,
             types.EXTENSION3_BASE, 0,
             types.STR5_BASE | 3, ...charCodes('def'),
+          types.ARRAY5_BASE | 1,
+            types.EXTENSION3_BASE, 0,
         types.ARRAY5_BASE | 3,
           types.EXTENSION3_BASE | 1,
             types.ARRAY5_BASE | 3,
@@ -217,10 +220,10 @@ describe('built-in optimisations', function () {
               0,
               3,
               4,
-          types.MAP,
-            types.ARRAY5_BASE | 1,
-              types.EXTENSION3_BASE, 0,
-            5,
+          types.EXTENSION3_BASE | 1,
+            types.ARRAY5_BASE | 2,
+              1,
+              5,
       ]);
       let decoded = decode(encoded, { extensions });
       expect(decoded).to.be.eql(data);

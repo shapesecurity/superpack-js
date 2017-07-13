@@ -4,11 +4,12 @@ export type ExtensionPoint = number;
 
 export interface Extension<-A, -B, +Memo = void> {
   constructor(): Extension<A, B, Memo>;
+  +shouldApplyRecursively?: (() => boolean);
   isCandidate(any) : boolean;
-  +shouldSerialise: ?(A => boolean);
+  +shouldSerialise?: (A => boolean);
   serialise(A) : B;
   deserialise(x : B, memo : Memo) : A;
-  +memo: ?(() => Memo);
+  +memo?: (() => Memo);
 }
 
 export type ExtensionMap = {

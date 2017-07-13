@@ -17,16 +17,19 @@ function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
 export default class KeysetDeduplicationOptimisation implements Extension<{}, Array<any>, Array<Keyset>> {
   keysets : Array<Keyset>
   frequencies : Array<number>
-  finalisedKeysets : ?Array<Keyset>
 
   constructor() {
     this.keysets = [];
     this.frequencies = [];
   }
 
+  shouldApplyRecursively() : boolean {
+    return true;
+  }
+
   isCandidate(x : any) : boolean {
     // WARN: this condition is equivalent to reaching the final case in the
-    // encoder where the value is treates as a record
+    // encoder where the value is treated as a record
     if (
       typeof x === 'object' && x != null &&
       {}.toString.call(x) !== '[object Date]' &&
@@ -46,24 +49,9 @@ export default class KeysetDeduplicationOptimisation implements Extension<{}, Ar
     return false;
   }
 
-  shouldSerialise(x : {}) : boolean {
-    let finalisedKeysets = this.finalisedKeysets;
-    if (finalisedKeysets == null) {
-      finalisedKeysets = this.finaliseKeysets();
-      this.finalisedKeysets = finalisedKeysets;
-    }
-    let keys = Object.keys(x).sort();
-    return this.frequencies[this.findKeysetIndex(keys, finalisedKeysets)] > 1;
-  }
-
   serialise(x : {}) : Array<any> {
-    let finalisedKeysets = this.finalisedKeysets;
-    if (finalisedKeysets == null) {
-      finalisedKeysets = this.finaliseKeysets();
-      this.finalisedKeysets = finalisedKeysets;
-    }
     let keys = Object.keys(x).sort();
-    let index = this.findKeysetIndex(keys, finalisedKeysets);
+    let index = this.findKeysetIndex(keys, this.keysets);
     return [index, ...keys.map(k => x[k])];
   }
 
@@ -76,11 +64,7 @@ export default class KeysetDeduplicationOptimisation implements Extension<{}, Ar
   }
 
   memo(): Array<Keyset> {
-    return this.finalisedKeysets || [];
-  }
-
-  finaliseKeysets() : Array<Keyset> {
-    return [].concat(...this.keysets.map((ks, i) => this.frequencies[i] > 1 ? [ks] : []));
+    return this.keysets;
   }
 
   // WARN: keys are sorted

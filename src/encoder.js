@@ -275,9 +275,12 @@ export default class Encoder extends Extendable {
     while (enabledExtensions.length > 0) {
       let extensionPoint = enabledExtensions.pop();
       let extension = this.extensions[extensionPoint];
+      let applyRecursively = extension.shouldApplyRecursively != null && extension.shouldApplyRecursively();
 
       if ({}.hasOwnProperty.call(this.placeholderMap, extensionPoint)) {
-        this.placeholderMap[extensionPoint].forEach(placeholder => {
+        let placeholders = this.placeholderMap[extensionPoint];
+        for (let placeholderIndex = 0; placeholderIndex < placeholders.length; ++placeholderIndex) {
+          let placeholder = placeholders[placeholderIndex];
           let extTarget = [];
           if (extension.shouldSerialise == null || extension.shouldSerialise(placeholder.value)) {
             if (extensionPoint < 8) {
@@ -286,12 +289,15 @@ export default class Encoder extends Extendable {
               extTarget.push(tags.EXTENSION_);
               encodeUInt(extensionPoint, extTarget);
             }
-            this.encodeValue(extension.serialise(placeholder.value), extTarget, enabledExtensions);
+            let furtherEnabledExtensions = applyRecursively
+              ? [...enabledExtensions, extensionPoint]
+              : enabledExtensions;
+            this.encodeValue(extension.serialise(placeholder.value), extTarget, furtherEnabledExtensions);
           } else {
             this.encodeValue(placeholder.value, extTarget, enabledExtensions);
           }
           target.splice(target.indexOf(placeholder), 1, ...extTarget);
-        });
+        }
       }
 
       if (typeof extension.memo === 'function') {
