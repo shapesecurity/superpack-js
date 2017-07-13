@@ -1,4 +1,4 @@
-/* global Uint8Array */
+/* global Uint8Array ArrayBuffer */
 
 import tags from './type-tags.js';
 import Extendable from './extendable.js';
@@ -170,7 +170,7 @@ export default class Decoder extends Extendable {
       case tags.BINARY_: {
         let length: number = this.decodeValue();
         // alternative to Uint8Array.from(...) for old browsers
-        let out = Uint8Array.of();
+        let out = new Uint8Array(new ArrayBuffer(length));
         for (let i = 0; i < length; ++i) {
           out[i] = this.buffer[this.ptr + i];
         }

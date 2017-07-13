@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "flow check",
     "lint": "eslint src/**/*.js",
-    "pretest": "npm run lint && npm run typecheck && npm run build",
+    "pretest": "npm run lint && npm run typecheck",
     "test": "npm run test:local",
     "test:local": "karma start test/local.conf.js",
     "test:ci": "npm run pretest && karma start test/browserstack.conf.js",
@@ -18,7 +18,7 @@
     "build:flow": "cp flow-typed/* .",
     "build": "npm run build:esm && npm run build:cjs && npm run build:flow && npm run build:test && npm run copy:cjs",
     "clean": "rm -rf dist build *.flow coverage",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "main": "dist/cjs/index.js",
   "module": "superpack.js",

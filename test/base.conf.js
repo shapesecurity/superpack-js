@@ -18,10 +18,12 @@ module.exports = {
           exclude: /node_modules/,
           loader: 'babel-loader',
           options: {
+            presets: ['es2015'],
             plugins: [
               ['istanbul', {
                 'exclude': 'test/**/*',
               }],
+              'babel-plugin-transform-flow-strip-types',
             ],
           },
         },
