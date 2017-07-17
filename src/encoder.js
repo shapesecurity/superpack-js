@@ -277,7 +277,7 @@ export default class Encoder extends Extendable {
       let extension = this.extensions[extensionPoint];
       let applyRecursively = extension.shouldApplyRecursively != null && extension.shouldApplyRecursively();
 
-      if ({}.hasOwnProperty.call(this.placeholderMap, extensionPoint)) {
+      if (extensionPoint in this.placeholderMap) {
         let placeholders = this.placeholderMap[extensionPoint];
         for (let placeholderIndex = 0; placeholderIndex < placeholders.length; ++placeholderIndex) {
           let placeholder = placeholders[placeholderIndex];
@@ -310,7 +310,7 @@ export default class Encoder extends Extendable {
 
   addToPlaceholderMap(placeholder : ExtensionPlaceholder) : void {
     let ext = placeholder.extensionPoint;
-    if ({}.hasOwnProperty.call(this.placeholderMap, ext)) {
+    if (ext in this.placeholderMap) {
       this.placeholderMap[ext].push(placeholder);
     } else {
       this.placeholderMap[ext] = [placeholder];
