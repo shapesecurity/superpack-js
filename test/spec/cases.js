@@ -304,8 +304,8 @@ let cases = {
     },
     {
       value: repeat('a', 31) + '\u0000',
-      bytes: [types.STR8, 32].concat(fill(Array(31), 97)).concat([0]),
-      desc: '32-char null-byte-containing string as str8'
+      bytes: [types.STR_, 32].concat(fill(Array(31), 97)).concat([0]),
+      desc: '32-char null-byte-containing string as str_'
     },
     {
       value: repeat('a', 256),
@@ -388,12 +388,12 @@ let cases = {
     },
     {
       value: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-      bytes: [types.BARRAY8, 16, 0xFF, 0xFF],
+      bytes: [types.BARRAY_, 16, 0xFF, 0xFF],
       desc: 'an array of 16 trues'
     },
     {
       value: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
-      bytes: [types.BARRAY8, 17, 0xFF, 0xFF, 0x80],
+      bytes: [types.BARRAY_, 17, 0xFF, 0xFF, 0x80],
       desc: 'an array of 17 trues'
     }
   ],
@@ -401,139 +401,72 @@ let cases = {
     {
       value: { 0: 'a' },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 48,
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 97,
+        types.MAP,
+          types.ARRAY5_BASE | 1,
+            types.STR5_BASE | 1, 48,
+          types.STR5_BASE | 1, 97,
       ],
       desc: 'a 1-element map as map_'
     },
     {
       value: { 0: 'a', 1: 'b' },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 2,
-        types.STR5_BASE | 1, 48,
-        types.STR5_BASE | 1, 49,
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 97,
-        types.STR5_BASE | 1, 98,
+        types.MAP,
+          types.ARRAY5_BASE | 2,
+            types.STR5_BASE | 1, 48,
+            types.STR5_BASE | 1, 49,
+          types.STR5_BASE | 1, 97,
+          types.STR5_BASE | 1, 98,
       ],
       desc: 'a 2-element map as map_'
     },
     {
       value: { a: 'b', c: { d: 'e' } },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 2,
-        types.ARRAY5_BASE | 2,
-        types.STR5_BASE | 1, 97,
-        types.STR5_BASE | 1, 99,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 100,
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 98,
-        types.MAP_, 1,
-        types.STR5_BASE | 1, 101,
+        types.MAP,
+          types.ARRAY5_BASE | 2,
+            types.STR5_BASE | 1, 97,
+            types.STR5_BASE | 1, 99,
+          types.STR5_BASE | 1, 98,
+          types.MAP,
+            types.ARRAY5_BASE | 1,
+              types.STR5_BASE | 1, 100,
+            types.STR5_BASE | 1, 101,
       ],
       desc: 'a nested map'
     },
-    {
-      value: { a: 'b', c: { d: 'e' } },
-      keysetsToOmit: [],
-      bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 2,
-        types.ARRAY5_BASE | 2,
-        types.STR5_BASE | 1, 97,
-        types.STR5_BASE | 1, 99,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 100,
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 98,
-        types.MAP_, 1,
-        types.STR5_BASE | 1, 101,
-      ],
-      desc: 'a nested map'
-    },
-    {
-      value: { a: 'b', c: { d: 'e' } },
-      keysetsToOmit: [['a', 'c'], ['d']],
-      bytes: [
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 98,
-        types.MAP_, 1,
-        types.STR5_BASE | 1, 101,
-      ],
-      desc: 'a nested map with omitted keysets'
-    },
-    {
-      value: { a: 'b', c: { d: 'e' } },
-      keysetsToOmit: [['a', 'c'], ['d'], ['f', 'g']],
-      bytes: [
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 98,
-        types.MAP_, 1,
-        types.STR5_BASE | 1, 101,
-      ],
-      desc: 'a nested map with a superset of omitted keysets'
-    },
-    {
-      value: { a: 'b', c: { d: 'e' } },
-      keysetsToOmit: [['a', 'c']],
-      bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 100,
-        types.MAP_, 0,
-        types.STR5_BASE | 1, 98,
-        types.MAP_, 1,
-        types.STR5_BASE | 1, 101,
-      ],
-      desc: 'a nested map with a subset of omitted keysets'
-    }
   ],
   'bmaps': [
     {
       value: { 0: false },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 48,
-        types.BMAP_, 0,
-        0,
+        types.BMAP,
+          types.ARRAY5_BASE | 1,
+            types.STR5_BASE | 1, 48,
+          0,
       ],
-      desc: 'a 1-element bmap with false as bmap_'
+      desc: 'a 1-element bmap with false as bmap'
     },
     {
       value: { 0: true },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 1,
-        types.STR5_BASE | 1, 48,
-        types.BMAP_, 0,
-        128,
+        types.BMAP,
+          types.ARRAY5_BASE | 1,
+            types.STR5_BASE | 1, 48,
+          128,
       ],
-      desc: 'a 1-element bmap with true as bmap_'
+      desc: 'a 1-element bmap with true as bmap'
     },
     {
       value: { 0: false, 1: true },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 2,
-        types.STR5_BASE | 1, 48,
-        types.STR5_BASE | 1, 49,
-        types.BMAP_, 0,
-        64,
+        types.BMAP,
+          types.ARRAY5_BASE | 2,
+            types.STR5_BASE | 1, 48,
+            types.STR5_BASE | 1, 49,
+          64,
       ],
-      desc: 'a 2-element bmap as bmap_'
+      desc: 'a 2-element bmap as bmap'
     },
     {
       value: {
@@ -541,29 +474,28 @@ let cases = {
         i: false, j: false, k: true, l: true, m: true, n: true, o: false, p: false
       },
       bytes: [
-        types.STRLUT, 0,
-        types.ARRAY5_BASE | 1,
-        types.ARRAY5_BASE | 16,
-        types.STR5_BASE | 1, 97,
-        types.STR5_BASE | 1, 98,
-        types.STR5_BASE | 1, 99,
-        types.STR5_BASE | 1, 100,
-        types.STR5_BASE | 1, 101,
-        types.STR5_BASE | 1, 102,
-        types.STR5_BASE | 1, 103,
-        types.STR5_BASE | 1, 104,
-        types.STR5_BASE | 1, 105,
-        types.STR5_BASE | 1, 106,
-        types.STR5_BASE | 1, 107,
-        types.STR5_BASE | 1, 108,
-        types.STR5_BASE | 1, 109,
-        types.STR5_BASE | 1, 110,
-        types.STR5_BASE | 1, 111,
-        types.STR5_BASE | 1, 112,
-        types.BMAP_, 0,
-        195, 60,
+        types.BMAP,
+          types.ARRAY5_BASE | 16,
+            types.STR5_BASE | 1, 97,
+            types.STR5_BASE | 1, 98,
+            types.STR5_BASE | 1, 99,
+            types.STR5_BASE | 1, 100,
+            types.STR5_BASE | 1, 101,
+            types.STR5_BASE | 1, 102,
+            types.STR5_BASE | 1, 103,
+            types.STR5_BASE | 1, 104,
+            types.STR5_BASE | 1, 105,
+            types.STR5_BASE | 1, 106,
+            types.STR5_BASE | 1, 107,
+            types.STR5_BASE | 1, 108,
+            types.STR5_BASE | 1, 109,
+            types.STR5_BASE | 1, 110,
+            types.STR5_BASE | 1, 111,
+            types.STR5_BASE | 1, 112,
+          195,
+          60,
       ],
-      desc: 'a 16-element bmap as bmap_'
+      desc: 'a 16-element bmap as bmap'
     }
   ],
   'dates': [
@@ -608,7 +540,7 @@ let cases = {
 if (typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && typeof Int32Array !== 'undefined') {
 
   let littleEndian = (function () {
-    let buffer = new ArrayBuffer(2);
+    var buffer = new ArrayBuffer(2);
     new DataView(buffer).setInt16(0, 256, true);
     return new Int16Array(buffer)[0] === 256;
   }());

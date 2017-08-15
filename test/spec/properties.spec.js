@@ -1,10 +1,8 @@
-'use strict';
-
 import { expect } from 'chai';
 
 import gentest, { types as t } from 'gentest';
 
-import { encode, decode } from '../..';
+import { encode, decode } from '../../src/index';
 
 
 let SAMPLE_SIZE = 10;
