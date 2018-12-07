@@ -17,10 +17,20 @@ function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
 export default class KeysetDeduplicationOptimisation implements Extension<{}, Array<any>, Array<Keyset>> {
   keysets : Array<Keyset>
   frequencies : Array<number>
+  omittedKeysetCount: number
 
-  constructor() {
-    this.keysets = [];
+  constructor({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
+    this.keysets = omittedKeysets.slice(0);
     this.frequencies = [];
+    this.omittedKeysetCount = omittedKeysets.length;
+  }
+
+  static withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
+    let constructorIntercept = function () {
+      return new KeysetDeduplicationOptimisation({ omittedKeysets });
+    };
+    constructorIntercept.prototype = KeysetDeduplicationOptimisation.prototype;
+    return constructorIntercept;
   }
 
   shouldApplyRecursively() : boolean {
@@ -57,14 +67,20 @@ export default class KeysetDeduplicationOptimisation implements Extension<{}, Ar
 
   deserialise(x : Array<any>, memo : Array<Keyset>) : {} {
     let keysetIndex = (x.shift() : number);
-    return memo[keysetIndex].reduce((m, k, i) => {
+    let keyset;
+    if (keysetIndex < this.omittedKeysetCount) {
+      keyset = this.keysets[keysetIndex];
+    } else {
+      keyset = memo[keysetIndex - this.omittedKeysetCount];
+    }
+    return keyset.reduce((m, k, i) => {
       m[k] = x[i];
       return m;
     }, {});
   }
 
   memo(): Array<Keyset> {
-    return this.keysets;
+    return this.keysets.slice(this.omittedKeysetCount);
   }
 
   // WARN: keys are sorted
