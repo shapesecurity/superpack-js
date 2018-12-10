@@ -4,7 +4,7 @@ import tags from './type-tags.js';
 import Extendable from './extendable.js';
 import type { ExtensionMap, ExtensionPoint } from './extendable.js';
 
-type ExtensionPlaceholder = { value: any, extensionPoint: ExtensionPoint };
+type ExtensionPlaceholder = { value: any, extensionPoint: ExtensionPoint, location: number };
 
 type Byte = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 | 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 | 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 | 64 | 65 | 66 | 67 | 68 | 69 | 70 | 71 | 72 | 73 | 74 | 75 | 76 | 77 | 78 | 79 | 80 | 81 | 82 | 83 | 84 | 85 | 86 | 87 | 88 | 89 | 90 | 91 | 92 | 93 | 94 | 95 | 96 | 97 | 98 | 99 | 100 | 101 | 102 | 103 | 104 | 105 | 106 | 107 | 108 | 109 | 110 | 111 | 112 | 113 | 114 | 115 | 116 | 117 | 118 | 119 | 120 | 121 | 122 | 123 | 124 | 125 | 126 | 127 | 128 | 129 | 130 | 131 | 132 | 133 | 134 | 135 | 136 | 137 | 138 | 139 | 140 | 141 | 142 | 143 | 144 | 145 | 146 | 147 | 148 | 149 | 150 | 151 | 152 | 153 | 154 | 155 | 156 | 157 | 158 | 159 | 160 | 161 | 162 | 163 | 164 | 165 | 166 | 167 | 168 | 169 | 170 | 171 | 172 | 173 | 174 | 175 | 176 | 177 | 178 | 179 | 180 | 181 | 182 | 183 | 184 | 185 | 186 | 187 | 188 | 189 | 190 | 191 | 192 | 193 | 194 | 195 | 196 | 197 | 198 | 199 | 200 | 201 | 202 | 203 | 204 | 205 | 206 | 207 | 208 | 209 | 210 | 211 | 212 | 213 | 214 | 215 | 216 | 217 | 218 | 219 | 220 | 221 | 222 | 223 | 224 | 225 | 226 | 227 | 228 | 229 | 230 | 231 | 232 | 233 | 234 | 235 | 236 | 237 | 238 | 239 | 240 | 241 | 242 | 243 | 244 | 245 | 246 | 247 | 248 | 249 | 250 | 251 | 252 | 253 | 254 | 255;
 type SuperPackedValue = Array<Byte>;
@@ -237,7 +237,7 @@ function find(arrayLike, predicate) {
 
 export default class Encoder extends Extendable {
   placeholderMap : { [extensionPoint : ExtensionPoint] : Array<ExtensionPlaceholder> }
-
+  
   constructor() {
     super();
     this.placeholderMap = Object.create(null);
@@ -259,7 +259,8 @@ export default class Encoder extends Extendable {
     this.initialiseExtensions();
 
     let bytesWithPlaceholders = this.encodeValue(value, []);
-    return this.replaceExtensionPlaceholders(bytesWithPlaceholders);
+    let extensions = Object.keys(this.extensions).map(e => +e).sort();
+    return this.replaceExtensionPlaceholders(bytesWithPlaceholders, extensions);
   }
 
   /* begin private use area */
@@ -270,41 +271,100 @@ export default class Encoder extends Extendable {
     });
   }
 
-  replaceExtensionPlaceholders(target: SuperPackedValueWithPlaceholders) : SuperPackedValue {
-    let enabledExtensions = Object.keys(this.extensions).map(e => +e).sort();
-    while (enabledExtensions.length > 0) {
-      let extensionPoint = enabledExtensions.pop();
-      let extension = this.extensions[extensionPoint];
-      let applyRecursively = extension.shouldApplyRecursively != null && extension.shouldApplyRecursively();
+  replaceExtensionPlaceholders(target: SuperPackedValueWithPlaceholders, extensions: Array<number>, memo: boolean = true) : SuperPackedValue {
 
-      if (extensionPoint in this.placeholderMap) {
-        let placeholders = this.placeholderMap[extensionPoint];
-        for (let placeholderIndex = 0; placeholderIndex < placeholders.length; ++placeholderIndex) {
-          let placeholder = placeholders[placeholderIndex];
-          let extTarget = [];
-          if (extension.shouldSerialise == null || extension.shouldSerialise(placeholder.value)) {
-            if (extensionPoint < 8) {
-              extTarget.push(tags.EXTENSION3_BASE | extensionPoint);
-            } else {
-              extTarget.push(tags.EXTENSION_);
-              encodeUInt(extensionPoint, extTarget);
-            }
-            let furtherEnabledExtensions = applyRecursively
+    // repeatedly apply all extensions until there is no more work to be done (# of iterations = depth of extension modified extension data)
+    while (Object.keys(this.placeholderMap).length > 0) {
+      let placeholderMap = this.placeholderMap;
+      let replacements = [];
+      let enabledExtensions = extensions.slice(0);
+
+      // run the logic for all extensions
+      while (enabledExtensions.length > 0) {
+        let extensionPoint = enabledExtensions.pop();
+        let extension = this.extensions[extensionPoint];
+        let applyRecursively = extension.shouldApplyRecursively != null && extension.shouldApplyRecursively();
+
+        if (extensionPoint in placeholderMap) {
+          let placeholders = placeholderMap[extensionPoint];
+          let originalSize = placeholders.length;
+          for (let i = 0; i < originalSize; ++i) {
+            let placeholder = placeholders[i];
+            this.placeholderMap = {};
+            let extTarget = [];
+            if (extension.shouldSerialise == null || extension.shouldSerialise(placeholder.value)) {
+              if (extensionPoint < 8) {
+                extTarget.push(tags.EXTENSION3_BASE | extensionPoint);
+              } else {
+                extTarget.push(tags.EXTENSION_);
+                encodeUInt(extensionPoint, extTarget);
+              }
+              let furtherEnabledExtensions = applyRecursively
               ? [...enabledExtensions, extensionPoint]
               : enabledExtensions;
-            this.encodeValue(extension.serialise(placeholder.value), extTarget, furtherEnabledExtensions);
-          } else {
-            this.encodeValue(placeholder.value, extTarget, enabledExtensions);
+              this.encodeValue(extension.serialise(placeholder.value), extTarget, furtherEnabledExtensions);
+            } else {
+              this.encodeValue(placeholder.value, extTarget, enabledExtensions);
+            }
+            replacements.push({ index: placeholder.location, data: extTarget, placeholders: this.placeholderMap });
           }
-          target.splice(target.indexOf(placeholder), 1, ...extTarget);
         }
       }
 
-      if (typeof extension.memo === 'function') {
-        target.unshift(...this.encodeValue(extension.memo(), [], enabledExtensions));
+      this.placeholderMap = {};
+
+      let returnData = [];
+      let lastIndex = 0;
+
+      // restructure data into new array
+      for (let replacement of replacements) {
+        if (replacement.index < lastIndex) {
+          throw new Error('Corrupt non-linear state');
+        } else if (replacement.index > lastIndex) {
+          returnData.push(...target.slice(lastIndex, replacement.index)); // skips placeholder byte
+        }
+        for (let extensionPoint in replacement.placeholders) {
+          if (!(extensionPoint in this.placeholderMap)) {
+            this.placeholderMap[extensionPoint] = [];
+          }
+          let placeholders = replacement.placeholders[extensionPoint];
+          for (let placeholder of placeholders) {
+            this.placeholderMap[extensionPoint].push({ value: placeholder.value, extensionPoint: extensionPoint, location: placeholder.location + returnData.length });
+          }
+        }
+
+        // fill in replacement data
+        returnData.push(...replacement.data);
+        lastIndex = replacement.index + 1;
       }
+      
+      returnData.push(...target.slice(lastIndex));
+      target = returnData;
     }
 
+    if (memo) { // build memos in series
+      let enabledExtensions = extensions.slice(0);
+      let prepend = [];
+      
+      while (enabledExtensions.length > 0) {
+        let extensionPoint = enabledExtensions.pop();
+        let extension = this.extensions[extensionPoint];
+        if (typeof extension.memo === 'function') {
+          this.placeholderMap = {};
+          let extTarget = [];
+          let predata = this.encodeValue(extension.memo(), extTarget, enabledExtensions);
+          let memoData = this.replaceExtensionPlaceholders(predata, enabledExtensions, false);
+          prepend.push(memoData);
+        }
+      }
+      // combine them all together
+      let finalData = [];
+      for (let prependedData of prepend.reverse()) {
+        finalData.push(...prependedData);
+      }
+      finalData.push(...((target : any) : SuperPackedValue));
+      return finalData;
+    }
     return ((target : any) : SuperPackedValue);
   }
 
@@ -327,6 +387,7 @@ export default class Encoder extends Extendable {
       let placeholder = ({
         value,
         extensionPoint: +ext,
+        location: target.length,
       } : ExtensionPlaceholder);
       this.addToPlaceholderMap(placeholder);
       target.push(placeholder);
