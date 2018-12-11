@@ -14,23 +14,23 @@ function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
   return a.length === b.length && a.every((c, i) => b[i] === c);
 }
 
+export function withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
+  return class extends KeysetDeduplicationOptimisation {
+    constructor() {
+      super(omittedKeysets);
+    }
+  }
+}
+
 export default class KeysetDeduplicationOptimisation implements Extension<{}, Array<any>, Array<Keyset>> {
   keysets : Array<Keyset>
   frequencies : Array<number>
   omittedKeysetCount: number
 
   constructor({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
-    this.keysets = omittedKeysets.slice(0);
+    this.keysets = [].slice.call(omittedKeysets);
     this.frequencies = [];
     this.omittedKeysetCount = omittedKeysets.length;
-  }
-
-  static withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
-    let constructorIntercept = function () {
-      return new KeysetDeduplicationOptimisation({ omittedKeysets });
-    };
-    constructorIntercept.prototype = KeysetDeduplicationOptimisation.prototype;
-    return constructorIntercept;
   }
 
   shouldApplyRecursively() : boolean {
