@@ -14,14 +14,6 @@ function isSortedArrayOfThingsSameAsSortedArrayOfThings(a, b) {
   return a.length === b.length && a.every((c, i) => b[i] === c);
 }
 
-export function withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
-  return class extends KeysetDeduplicationOptimisation {
-    constructor() {
-      super(omittedKeysets);
-    }
-  }
-}
-
 export default class KeysetDeduplicationOptimisation implements Extension<{}, Array<any>, Array<Keyset>> {
   keysets : Array<Keyset>
   frequencies : Array<number>
@@ -87,4 +79,12 @@ export default class KeysetDeduplicationOptimisation implements Extension<{}, Ar
   findKeysetIndex(keys : Keyset, keysets : Array<Keyset>) {
     return findIndex(keysets, a => isSortedArrayOfThingsSameAsSortedArrayOfThings(a, keys));
   }
+}
+
+export function withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
+  return class extends KeysetDeduplicationOptimisation {
+    constructor() {
+      super(omittedKeysets);
+    }
+  };
 }
