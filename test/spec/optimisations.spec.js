@@ -4,7 +4,7 @@ import SuperPackTranscoder, { encode, decode } from '../../src/index';
 import types from '../../src/type-tags';
 
 import StringDeduplication from '../../src/optimisations/string-deduplication.js';
-import KeysetDeduplication from '../../src/optimisations/keyset-deduplication.js';
+import KeysetDeduplication, { withOmittedKeysets as KeysetDeduplicationOmittedKeysets } from '../../src/optimisations/keyset-deduplication.js';
 
 function charCodes(string) {
   return string.split('').map(c => c.charCodeAt(0));
@@ -185,6 +185,89 @@ describe('built-in optimisations', function () {
                 0,
                 2,
                 3,
+      ]);
+      let decoded = decode(encoded, { extensions });
+      expect(decoded).to.be.eql(data);
+    });
+
+    it('doesn\'t omit keysets for nested maps when not asked', function () {
+      let extensions = {
+        0: KeysetDeduplication,
+      };
+
+      let data = { a: 'b', c: { d: 'e' } };
+      let encoded = encode(data, { extensions });
+      expect(encoded).to.be.eql([
+        types.ARRAY5_BASE | 2,
+        types.ARRAY5_BASE | 2,
+        types.STR5_BASE | 1, 97,
+        types.STR5_BASE | 1, 99,
+        types.ARRAY5_BASE | 1,
+        types.STR5_BASE | 1, 100,
+        types.EXTENSION3_BASE,
+        types.ARRAY5_BASE | 3, 0,
+        types.STR5_BASE | 1, 98,
+        types.EXTENSION3_BASE, types.ARRAY5_BASE | 2, 1,
+        types.STR5_BASE | 1, 101,
+      ]);
+      let decoded = decode(encoded, { extensions });
+      expect(decoded).to.be.eql(data);
+    });
+
+    it('omits keysets for nested maps', function () {
+      let extensions = {
+        0: KeysetDeduplicationOmittedKeysets({ omittedKeysets: [ ['a', 'c'], ['d'] ] }),
+      };
+
+      let data = { a: 'b', c: { d: 'e' } };
+      let encoded = encode(data, { extensions });
+      expect(encoded).to.be.eql([
+        types.ARRAY5_BASE,
+        types.EXTENSION3_BASE,
+        types.ARRAY5_BASE | 3, 0,
+        types.STR5_BASE | 1, 98,
+        types.EXTENSION3_BASE, types.ARRAY5_BASE | 2, 1,
+        types.STR5_BASE | 1, 101,
+      ]);
+      let decoded = decode(encoded, { extensions });
+      expect(decoded).to.be.eql(data);
+    });
+
+    it('omits keysets for nested maps with a superset of keysets', function () {
+      let extensions = {
+        0: KeysetDeduplicationOmittedKeysets({ omittedKeysets: [ ['a', 'c'], ['d'], ['f', 'g'] ] }),
+      };
+
+      let data = { a: 'b', c: { d: 'e' } };
+      let encoded = encode(data, { extensions });
+      expect(encoded).to.be.eql([
+        types.ARRAY5_BASE,
+        types.EXTENSION3_BASE,
+        types.ARRAY5_BASE | 3, 0,
+        types.STR5_BASE | 1, 98,
+        types.EXTENSION3_BASE, types.ARRAY5_BASE | 2, 1,
+        types.STR5_BASE | 1, 101,
+      ]);
+      let decoded = decode(encoded, { extensions });
+      expect(decoded).to.be.eql(data);
+    });
+
+    it('omits unnecessary keysets for nested maps with a subset of keysets', function () {
+      let extensions = {
+        0: KeysetDeduplicationOmittedKeysets({ omittedKeysets: [ ['a', 'c'] ] }),
+      };
+
+      let data = { a: 'b', c: { d: 'e' } };
+      let encoded = encode(data, { extensions });
+      expect(encoded).to.be.eql([
+        types.ARRAY5_BASE | 1,
+        types.ARRAY5_BASE | 1,
+        types.STR5_BASE | 1, 100,
+        types.EXTENSION3_BASE,
+        types.ARRAY5_BASE | 3, 0,
+        types.STR5_BASE | 1, 98,
+        types.EXTENSION3_BASE, types.ARRAY5_BASE | 2, 1,
+        types.STR5_BASE | 1, 101,
       ]);
       let decoded = decode(encoded, { extensions });
       expect(decoded).to.be.eql(data);
