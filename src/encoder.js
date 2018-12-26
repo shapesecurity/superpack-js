@@ -271,24 +271,22 @@ export default class Encoder extends Extendable {
     });
   }
 
-  replaceExtensionPlaceholders(target: SuperPackedValueWithPlaceholders, extensions: Array<number>, memo: boolean = true) : SuperPackedValue {
+  replaceExtensionPlaceholders(target: SuperPackedValueWithPlaceholders, extensions: Array<number>, includeMemos: boolean = true) : SuperPackedValue {
 
     // repeatedly apply all extensions until there is no more work to be done (# of iterations = depth of extension modified extension data)
     while (Object.keys(this.placeholderMap).length > 0) {
       let placeholderMap = this.placeholderMap;
       let replacements = [];
-      let enabledExtensions = extensions.slice(0);
+      let enabledExtensions = extensions.slice();
 
-      // run the logic for all extensions
       while (enabledExtensions.length > 0) {
         let extensionPoint = enabledExtensions.pop();
         let extension = this.extensions[extensionPoint];
         let applyRecursively = extension.shouldApplyRecursively != null && extension.shouldApplyRecursively();
 
-        if (extensionPoint in placeholderMap) {
+        if ({}.hasOwnProperty.call(placeholderMap, extensionPoint)) {
           let placeholders = placeholderMap[extensionPoint];
-          let originalSize = placeholders.length;
-          for (let i = 0; i < originalSize; ++i) {
+          for (let i = 0; i < placeholders.length; ++i) {
             let placeholder = placeholders[i];
             this.placeholderMap = {};
             let extTarget = [];
@@ -299,9 +297,7 @@ export default class Encoder extends Extendable {
                 extTarget.push(tags.EXTENSION_);
                 encodeUInt(extensionPoint, extTarget);
               }
-              let furtherEnabledExtensions = applyRecursively
-              ? [...enabledExtensions, extensionPoint]
-              : enabledExtensions;
+              let furtherEnabledExtensions = applyRecursively ? [...enabledExtensions, extensionPoint] : enabledExtensions;
               this.encodeValue(extension.serialise(placeholder.value), extTarget, furtherEnabledExtensions);
             } else {
               this.encodeValue(placeholder.value, extTarget, enabledExtensions);
@@ -321,14 +317,16 @@ export default class Encoder extends Extendable {
         if (replacement.index < lastIndex) {
           throw new Error('Corrupt non-linear state');
         } else if (replacement.index > lastIndex) {
-          returnData.push(...target.slice(lastIndex, replacement.index)); // skips placeholder byte
+          // skips placeholder byte
+          returnData.push(...target.slice(lastIndex, replacement.index));
         }
         for (let extensionPoint in replacement.placeholders) {
           if (!(extensionPoint in this.placeholderMap)) {
             this.placeholderMap[extensionPoint] = [];
           }
           let placeholders = replacement.placeholders[extensionPoint];
-          for (let placeholder of placeholders) {
+          for (let i = 0; i < placeholders.length; ++i) {
+            let placeholder = placeholders[i];
             this.placeholderMap[extensionPoint].push({ value: placeholder.value, extensionPoint: extensionPoint, location: placeholder.location + returnData.length });
           }
         }
@@ -342,8 +340,8 @@ export default class Encoder extends Extendable {
       target = returnData;
     }
 
-    if (memo) { // build memos in series
-      let enabledExtensions = extensions.slice(0);
+    if (includeMemos) { // build memos in series
+      let enabledExtensions = extensions.slice();
       let prepend = [];
       
       while (enabledExtensions.length > 0) {
@@ -359,8 +357,8 @@ export default class Encoder extends Extendable {
       }
       // combine them all together
       let finalData = [];
-      for (let prependedData of prepend.reverse()) {
-        finalData.push(...prependedData);
+      for (let i = prepend.length - 1; i >= 0; --i) {
+        finalData.push(...prepend[i]);
       }
       finalData.push(...((target : any) : SuperPackedValue));
       return finalData;
