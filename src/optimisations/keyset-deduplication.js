@@ -84,7 +84,7 @@ export default class KeysetDeduplicationOptimisation implements Extension<{}, Ar
 export function withOmittedKeysets({ omittedKeysets = [] } : { omittedKeysets : Array<Keyset>} = {}) {
   return class extends KeysetDeduplicationOptimisation {
     constructor() {
-      super(omittedKeysets);
+      super({ omittedKeysets });
     }
   };
 }
