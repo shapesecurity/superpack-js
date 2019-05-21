@@ -395,7 +395,7 @@ export default class Encoder extends Extendable {
 
       let containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
 
-      if (containsOnlyBooleans) {
+      if (containsOnlyBooleans && numKeys > 0) {
         target.push(tags.BMAP);
         this.encodeValue(keys, target, enabledExtensions);
 
