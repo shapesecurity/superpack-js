@@ -3,10 +3,7 @@ language: node_js
 script:
   - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
   - npm run test:ci
-node_js:
-  - "8"
-  - "10"
-  - "12"
+node_js: "12"
 env:
   matrix:
     - BROWSERS=IE
