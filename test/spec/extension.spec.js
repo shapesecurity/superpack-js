@@ -38,6 +38,32 @@ describe('extension', function () {
     expect(getFlags(decoded)).to.be.equal('i');
   });
 
+  it('can support higher-numbered extensions (>=8)', function () {
+    let extensions = {
+      8: class {
+        // detect values which require this custom serialisation
+        isCandidate(x) { return x instanceof RegExp; }
+        // serialise: return an intermediate value which will be encoded instead
+        serialise(r) { return [r.source, getFlags(r)]; }
+        // deserialise: from the intermediate value, reconstruct the original value
+        deserialise([source, flags]) { return RegExp(source, flags); }
+      },
+    };
+
+    let encoded = encode(/a/i, { extensions });
+    expect(encoded).to.be.eql([
+      types.EXTENSION_,
+        8,
+        types.ARRAY5_BASE | 2,
+          types.STR5_BASE | 1, 'a'.charCodeAt(0),
+          types.STR5_BASE | 1, 'i'.charCodeAt(0),
+    ]);
+    let decoded = decode(encoded, { extensions });
+    expect(decoded).to.be.an.instanceof(RegExp);
+    expect(decoded.source).to.be.equal('a');
+    expect(getFlags(decoded)).to.be.equal('i');
+  });
+
   it('can allow us to express RegExps using the functional interface', function () {
     let extensions = {
       0: class {

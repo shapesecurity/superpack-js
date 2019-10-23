@@ -213,7 +213,7 @@ export default class Decoder extends Extendable {
         return out;
       }
 
-      case tags.EXTENSION: {
+      case tags.EXTENSION_: {
         let ext : ExtensionPoint = this.decodeValue();
         return this.extensions[ext].deserialise(this.decodeValue(), this.memos[ext]);
       }
