@@ -195,6 +195,13 @@ describe('extension', function () {
 
     it('can encode symbols', function () {
       if (typeof Symbol !== 'function') return;
+      
+      // Yandex browser (at least 14) throws when converting symbol to string
+      try {
+        String(Symbol('test'));
+      } catch (unused) {
+        return;
+      }
 
       function getDescription(sym) {
         return String(sym).slice(7, -1);
