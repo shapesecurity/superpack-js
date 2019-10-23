@@ -21,17 +21,11 @@ const SAFARI = [
 ];
 
 const FIREFOX = [
-  'Windows_10_firefox__66',
-  'Windows_10_firefox__67',
-  'Windows_10_firefox__68',
   'Windows_10_firefox__69',
   'Windows_10_firefox__70',
 ];
 
 const CHROME = [
-  'Windows_10_chrome__74',
-  'Windows_10_chrome__75',
-  'Windows_10_chrome__76',
   'Windows_10_chrome__77',
   'Windows_10_chrome__78',
 ];
@@ -39,9 +33,7 @@ const CHROME = [
 const ANDROID = [
   'android_90_AndroidBrowser_SamsungGalaxyS9Plus_',
   'android_81_AndroidBrowser_SamsungGalaxyTabS4_',
-  'android_80_AndroidBrowser_SamsungGalaxyS9Plus_',
   'android_71_AndroidBrowser_SamsungGalaxyNote8_',
-  'android_70_AndroidBrowser_SamsungGalaxyS8Plus_',
   'android_60_AndroidBrowser_SamsungGalaxyS7_',
   'android_50_AndroidBrowser_SamsungGalaxyS6_',
 ];
@@ -49,23 +41,13 @@ const ANDROID = [
 const IPHONE = [
   'ios_130_MobileSafari_iPhoneXS_',
   'ios_124_MobileSafari_iPhoneXS_',
-  'ios_123_MobileSafari_iPhone8Plus_',
-  'ios_122_MobileSafari_iPhoneXS_',
-  'ios_121_MobileSafari_iPhoneXS_',
   'ios_114_MobileSafari_iPhoneX_',
-  'ios_113_MobileSafari_iPhoneX_',
-  'ios_112_MobileSafari_iPhoneX_',
-  'ios_111_MobileSafari_iPhoneX_',
-  'ios_110_MobileSafari_iPhoneX_',
   'ios_103_MobileSafari_iPhone7_',
 ];
 
 const OTHERS = [
   'Windows_10_yandex__1412',
   'Windows_10_opera__58',
-  'Windows_10_opera__60',
-  'Windows_10_opera__62',
-  'Windows_10_opera__63',
   'Windows_10_opera__64',
 ]
 
