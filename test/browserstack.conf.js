@@ -1,65 +1,78 @@
 /* eslint-disable camelcase */
 
 const IE = [
-  'bs_win10_ie11',
-  'bs_win81_ie11',
-  'bs_win7_ie11',
-  'bs_win8_ie10',
-  'bs_win7_ie10',
-  'bs_win7_ie9',
+  'Windows_7_ie__9',
+  'Windows_8_ie__10',
+  'Windows_10_ie__11',
 ];
 
 const EDGE = [
-  'bs_win10_edge14',
-  'bs_win10_edge13',
+  'Windows_10_edge__15',
+  'Windows_10_edge__16',
+  'Windows_10_edge__17',
+  'Windows_10_edge__18',
 ];
 
 const SAFARI = [
-  'bs_sierra_safari10',
-  'bs_elcapitan_safari9',
-  'bs_yosemite_safari8',
-  'bs_mavericks_safari7',
+  'OSX_Mojave_safari__121',
+  'OSX_HighSierra_safari__111',
+  'OSX_Sierra_safari__101',
+  'OSX_ElCapitan_safari__91',
 ];
 
 const FIREFOX = [
-  'bs_win10_ff52',
-  'bs_win10_ff51',
-  'bs_win10_ff50',
-  'bs_win10_ff49',
-  'bs_win10_ff48',
-  'bs_win10_ff47',
-  'bs_win7_ff46',
-  'bs_win7_ff45',
+  'Windows_10_firefox__66',
+  'Windows_10_firefox__67',
+  'Windows_10_firefox__68',
+  'Windows_10_firefox__69',
+  'Windows_10_firefox__70',
 ];
 
 const CHROME = [
-  'bs_win10_chrome56',
-  'bs_win10_chrome55',
-  'bs_win10_chrome54',
-  'bs_win10_chrome53',
-  'bs_win10_chrome52',
-  'bs_win8_chrome51',
-  'bs_win8_chrome50',
-  'bs_win8_chrome49',
-  'bs_win7_chrome48',
+  'Windows_10_chrome__74',
+  'Windows_10_chrome__75',
+  'Windows_10_chrome__76',
+  'Windows_10_chrome__77',
+  'Windows_10_chrome__78',
 ];
 
 const ANDROID = [
-  'bs_android_htc44',
-  'bs_android_samsungtab44',
-  'bs_android_samsunggal44',
+  'android_90_AndroidBrowser_SamsungGalaxyS9Plus_',
+  'android_81_AndroidBrowser_SamsungGalaxyTabS4_',
+  'android_80_AndroidBrowser_SamsungGalaxyS9Plus_',
+  'android_71_AndroidBrowser_SamsungGalaxyNote8_',
+  'android_70_AndroidBrowser_SamsungGalaxyS8Plus_',
+  'android_60_AndroidBrowser_SamsungGalaxyS7_',
+  'android_50_AndroidBrowser_SamsungGalaxyS6_',
 ];
 
 const IPHONE = [
-  'bs_iphone_10',
-  'bs_iphone_93',
-  'bs_iphone_83',
+  'ios_130_MobileSafari_iPhoneXS_',
+  'ios_124_MobileSafari_iPhoneXS_',
+  'ios_123_MobileSafari_iPhone8Plus_',
+  'ios_122_MobileSafari_iPhoneXS_',
+  'ios_121_MobileSafari_iPhoneXS_',
+  'ios_114_MobileSafari_iPhoneX_',
+  'ios_113_MobileSafari_iPhoneX_',
+  'ios_112_MobileSafari_iPhoneX_',
+  'ios_111_MobileSafari_iPhoneX_',
+  'ios_110_MobileSafari_iPhoneX_',
+  'ios_103_MobileSafari_iPhone7_',
 ];
+
+const OTHERS = [
+  'Windows_10_yandex__1412',
+  'Windows_10_opera__58',
+  'Windows_10_opera__60',
+  'Windows_10_opera__62',
+  'Windows_10_opera__63',
+  'Windows_10_opera__64',
+]
 
 let browsers = [];
 
 if (process.env.BROWSERS == null) {
-  browsers = [].concat(IE, EDGE, SAFARI, FIREFOX, CHROME, ANDROID, IPHONE);
+  browsers = [].concat(IE, EDGE, SAFARI, FIREFOX, CHROME, ANDROID, IPHONE, OTHERS);
 } else {
   // example usage: BROWSERS=IE,SAFARI,ANDROID npm run test:ci
   if (/\bIE\b/i.test(process.env.BROWSERS)) {
@@ -83,6 +96,9 @@ if (process.env.BROWSERS == null) {
   if (/\bIPHONE\b/i.test(process.env.BROWSERS)) {
     browsers = browsers.concat(IPHONE);
   }
+  if (/\bOTHERS\b/i.test(process.env.BROWSERS)) {
+    browsers = browsers.concat(OTHERS);
+  }
 }
 
 
@@ -102,250 +118,410 @@ module.exports = function (config) {
     browsers: browsers,
 
     customLaunchers: {
-      bs_win10_ie11: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '10',
-        'browser': 'IE',
-        'browser_version': '11.0',
+      Windows_7_ie__9: {
+        os: 'Windows',
+        os_version: '7',
+        browser: 'ie',
+        device: null,
+        browser_version: '9.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_edge14: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '10',
-        'browser': 'Edge',
-        'browser_version': '14.0',
+      Windows_8_ie__10: {
+        os: 'Windows',
+        os_version: '8',
+        browser: 'ie',
+        device: null,
+        browser_version: '10.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_edge13: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '10',
-        'browser': 'Edge',
-        'browser_version': '13.0',
+      Windows_10_ie__11: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'ie',
+        device: null,
+        browser_version: '11.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win81_ie11: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '8.1',
-        'browser': 'IE',
-        'browser_version': '11.0'
+      Windows_10_edge__15: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'edge',
+        device: null,
+        browser_version: '15.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win8_ie10: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '8',
-        'browser': 'IE',
-        'browser_version': '10.0',
+      Windows_10_edge__16: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'edge',
+        device: null,
+        browser_version: '16.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win7_ie11: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '7',
-        'browser': 'IE',
-        'browser_version': '11.0',
+      Windows_10_edge__17: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'edge',
+        device: null,
+        browser_version: '17.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win7_ie10: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '7',
-        'browser': 'IE',
-        'browser_version': '10.0',
+      Windows_10_edge__18: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'edge',
+        device: null,
+        browser_version: '18.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win7_ie9: {
-        base: 'BrowserStack',
-        'os': 'Windows',
-        'os_version': '7',
-        'browser': 'IE',
-        'browser_version': '9.0',
+      OSX_Mojave_safari__121: {
+        os: 'OS X',
+        os_version: 'Mojave',
+        browser: 'safari',
+        device: null,
+        browser_version: '12.1',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_sierra_safari10: {
-        base: 'BrowserStack',
+      OSX_HighSierra_safari__111: {
+        os: 'OS X',
+        os_version: 'High Sierra',
+        browser: 'safari',
+        device: null,
+        browser_version: '11.1',
+        real_mobile: null,
+        base: 'BrowserStack'
+      },
+      OSX_Sierra_safari__101: {
         os: 'OS X',
         os_version: 'Sierra',
-        browser: 'Safari',
-        browser_version: '10.0'
+        browser: 'safari',
+        device: null,
+        browser_version: '10.1',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_elcapitan_safari9: {
-        base: 'BrowserStack',
+      OSX_ElCapitan_safari__91: {
         os: 'OS X',
         os_version: 'El Capitan',
-        browser: 'Safari',
-        browser_version: '9.1'
+        browser: 'safari',
+        device: null,
+        browser_version: '9.1',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_yosemite_safari8: {
-        base: 'BrowserStack',
-        os: 'OS X',
-        os_version: 'Yosemite',
-        browser: 'Safari',
-        browser_version: '8'
-      },
-      bs_mavericks_safari7: {
-        base: 'BrowserStack',
-        os: 'OS X',
-        os_version: 'Mavericks',
-        browser: 'Safari',
-        browser_version: '7.1'
-      },
-      bs_win10_ff52: {
-        base: 'BrowserStack',
+      Windows_10_chrome__74: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '52'
+        browser: 'chrome',
+        device: null,
+        browser_version: '74.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_ff51: {
-        base: 'BrowserStack',
+      Windows_10_chrome__75: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '51'
+        browser: 'chrome',
+        device: null,
+        browser_version: '75.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_ff50: {
-        base: 'BrowserStack',
+      Windows_10_chrome__76: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '50'
+        browser: 'chrome',
+        device: null,
+        browser_version: '76.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_ff49: {
-        base: 'BrowserStack',
+      Windows_10_chrome__77: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '49'
+        browser: 'chrome',
+        device: null,
+        browser_version: '77.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_ff48: {
-        base: 'BrowserStack',
+      Windows_10_chrome__78: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '48'
+        browser: 'chrome',
+        device: null,
+        browser_version: '78.0 beta',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_ff47: {
-        base: 'BrowserStack',
+      Windows_10_firefox__66: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Firefox',
-        browser_version: '47'
+        browser: 'firefox',
+        device: null,
+        browser_version: '66.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win7_ff46: {
-        base: 'BrowserStack',
-        os: 'Windows',
-        os_version: '7',
-        browser: 'Firefox',
-        browser_version: '46'
-      },
-      bs_win7_ff45: {
-        base: 'BrowserStack',
-        os: 'Windows',
-        os_version: '7',
-        browser: 'Firefox',
-        browser_version: '45'
-      },
-      bs_win10_chrome56: {
-        base: 'BrowserStack',
+      Windows_10_firefox__67: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Chrome',
-        browser_version: '55'
+        browser: 'firefox',
+        device: null,
+        browser_version: '67.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_chrome55: {
-        base: 'BrowserStack',
+      Windows_10_firefox__68: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Chrome',
-        browser_version: '55'
+        browser: 'firefox',
+        device: null,
+        browser_version: '68.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_chrome54: {
-        base: 'BrowserStack',
+      Windows_10_firefox__69: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Chrome',
-        browser_version: '54'
+        browser: 'firefox',
+        device: null,
+        browser_version: '69.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_chrome53: {
-        base: 'BrowserStack',
+      Windows_10_firefox__70: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Chrome',
-        browser_version: '53'
+        browser: 'firefox',
+        device: null,
+        browser_version: '70.0 beta',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win10_chrome52: {
-        base: 'BrowserStack',
+      Windows_10_yandex__1412: {
         os: 'Windows',
         os_version: '10',
-        browser: 'Chrome',
-        browser_version: '52'
+        browser: 'yandex',
+        device: null,
+        browser_version: '14.12',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win8_chrome51: {
-        base: 'BrowserStack',
+      Windows_10_opera__58: {
         os: 'Windows',
-        os_version: '8',
-        browser: 'Chrome',
-        browser_version: '51'
+        os_version: '10',
+        browser: 'opera',
+        device: null,
+        browser_version: '58.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win8_chrome50: {
-        base: 'BrowserStack',
+      Windows_10_opera__60: {
         os: 'Windows',
-        os_version: '8',
-        browser: 'Chrome',
-        browser_version: '50'
+        os_version: '10',
+        browser: 'opera',
+        device: null,
+        browser_version: '60.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win8_chrome49: {
-        base: 'BrowserStack',
+      Windows_10_opera__62: {
         os: 'Windows',
-        os_version: '8',
-        browser: 'Chrome',
-        browser_version: '49'
+        os_version: '10',
+        browser: 'opera',
+        device: null,
+        browser_version: '62.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_win7_chrome48: {
-        base: 'BrowserStack',
+      Windows_10_opera__63: {
         os: 'Windows',
-        os_version: '8',
-        browser: 'Chrome',
-        browser_version: '48'
+        os_version: '10',
+        browser: 'opera',
+        device: null,
+        browser_version: '63.0',
+        real_mobile: null,
+        base: 'BrowserStack'
       },
-      bs_android_htc44: {
-        base: 'BrowserStack',
-        os: 'Android',
-        os_version: 4.4,
+      Windows_10_opera__64: {
+        os: 'Windows',
+        os_version: '10',
+        browser: 'opera',
+        device: null,
+        browser_version: '64.0',
+        real_mobile: null,
+        base: 'BrowserStack'
+      },
+      android_90_AndroidBrowser_SamsungGalaxyS9Plus_: {
+        os: 'android',
+        os_version: '9.0',
         browser: 'Android Browser',
-        device: 'HTC One M8'
+        device: 'Samsung Galaxy S9 Plus',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       },
-      bs_android_samsungtab44: {
-        base: 'BrowserStack',
-        os: 'Android',
-        os_version: 4.4,
+      android_81_AndroidBrowser_SamsungGalaxyTabS4_: {
+        os: 'android',
+        os_version: '8.1',
         browser: 'Android Browser',
-        device: 'Samsung Galaxy Tab 4 10.1'
+        device: 'Samsung Galaxy Tab S4',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       },
-      bs_android_samsunggal44: {
-        base: 'BrowserStack',
-        os: 'Android',
-        os_version: 4.4,
+      android_80_AndroidBrowser_SamsungGalaxyS9Plus_: {
+        os: 'android',
+        os_version: '8.0',
         browser: 'Android Browser',
-        device: 'Samsung Galaxy S5'
+        device: 'Samsung Galaxy S9 Plus',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       },
-      bs_iphone_10: {
-        base: 'BrowserStack',
-        os: 'ios',
-        os_version: '10.0',
-        browser: 'Mobile Safari',
-        device: 'iPhone SE'
+      android_71_AndroidBrowser_SamsungGalaxyNote8_: {
+        os: 'android',
+        os_version: '7.1',
+        browser: 'Android Browser',
+        device: 'Samsung Galaxy Note 8',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       },
-      bs_iphone_93: {
-        base: 'BrowserStack',
-        os: 'ios',
-        os_version: '9.3',
-        browser: 'Mobile Safari',
-        device: 'iPhone 6S'
+      android_70_AndroidBrowser_SamsungGalaxyS8Plus_: {
+        os: 'android',
+        os_version: '7.0',
+        browser: 'Android Browser',
+        device: 'Samsung Galaxy S8 Plus',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       },
-      bs_iphone_83: {
-        base: 'BrowserStack',
+      android_60_AndroidBrowser_SamsungGalaxyS7_: {
+        os: 'android',
+        os_version: '6.0',
+        browser: 'Android Browser',
+        device: 'Samsung Galaxy S7',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      android_50_AndroidBrowser_SamsungGalaxyS6_: {
+        os: 'android',
+        os_version: '5.0',
+        browser: 'Android Browser',
+        device: 'Samsung Galaxy S6',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_130_MobileSafari_iPhoneXS_: {
         os: 'ios',
-        os_version: '8.3',
+        os_version: '13.0',
         browser: 'Mobile Safari',
-        device: 'iPhone 6'
+        device: 'iPhone XS',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_124_MobileSafari_iPhoneXS_: {
+        os: 'ios',
+        os_version: '12.4',
+        browser: 'Mobile Safari',
+        device: 'iPhone XS',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_123_MobileSafari_iPhone8Plus_: {
+        os: 'ios',
+        os_version: '12.3',
+        browser: 'Mobile Safari',
+        device: 'iPhone 8 Plus',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_122_MobileSafari_iPhoneXS_: {
+        os: 'ios',
+        os_version: '12.2',
+        browser: 'Mobile Safari',
+        device: 'iPhone XS',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_121_MobileSafari_iPhoneXS_: {
+        os: 'ios',
+        os_version: '12.1',
+        browser: 'Mobile Safari',
+        device: 'iPhone XS',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_114_MobileSafari_iPhoneX_: {
+        os: 'ios',
+        os_version: '11.4',
+        browser: 'Mobile Safari',
+        device: 'iPhone X',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_113_MobileSafari_iPhoneX_: {
+        os: 'ios',
+        os_version: '11.3',
+        browser: 'Mobile Safari',
+        device: 'iPhone X',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_112_MobileSafari_iPhoneX_: {
+        os: 'ios',
+        os_version: '11.2',
+        browser: 'Mobile Safari',
+        device: 'iPhone X',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_111_MobileSafari_iPhoneX_: {
+        os: 'ios',
+        os_version: '11.1',
+        browser: 'Mobile Safari',
+        device: 'iPhone X',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_110_MobileSafari_iPhoneX_: {
+        os: 'ios',
+        os_version: '11.0',
+        browser: 'Mobile Safari',
+        device: 'iPhone X',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
+      },
+      ios_103_MobileSafari_iPhone7_: {
+        os: 'ios',
+        os_version: '10.3',
+        browser: 'Mobile Safari',
+        device: 'iPhone 7',
+        browser_version: null,
+        real_mobile: true,
+        base: 'BrowserStack'
       }
     },
 
