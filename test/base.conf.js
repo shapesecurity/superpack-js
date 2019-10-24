@@ -54,6 +54,8 @@ module.exports = {
     ],
   },
 
+  concurrency: 2,
+
   // web server port
   // CLI --port 9876
   port: 8888,
@@ -77,7 +79,7 @@ module.exports = {
 
   // If browser does not capture in given timeout [ms], kill it
   // CLI --capture-timeout 20000
-  captureTimeout: 220000,
+  captureTimeout: 30e3,
 
   // Auto run tests on start (when browsers are captured) and exit
   // CLI --single-run --no-single-run
@@ -87,5 +89,7 @@ module.exports = {
   // CLI --report-slower-than 500
   reportSlowerThan: 500,
 
-  browserNoActivityTimeout: 50000,
+  browserDisconnectTolerance: 10,
+
+  browserNoActivityTimeout: 60e3,
 };
