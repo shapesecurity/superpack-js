@@ -94,7 +94,8 @@ module.exports = function (config) {
     browserStack: {
       username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_ACCESS_KEY,
-      project: 'superpack'
+      project: 'superpack',
+      video: false,
     },
     reporters: ['mocha'],
     browsers: browsers,
