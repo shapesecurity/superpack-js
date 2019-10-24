@@ -399,6 +399,14 @@ let cases = {
   ],
   'maps': [
     {
+      value: {},
+      bytes: [
+        types.MAP,
+          types.ARRAY5_BASE,
+      ],
+      desc: 'an empty map as map_'
+    },
+    {
       value: { 0: 'a' },
       bytes: [
         types.MAP,
