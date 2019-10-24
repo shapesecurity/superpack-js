@@ -8,7 +8,7 @@ type Byte = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 
 type SuperPackedValue = Array<Byte>;
 
 function within(t, base, nBits) {
-  return t >= base && t < base + (1 << nBits);
+  return (t >>> nBits) == (base >>> nBits);
 }
 
 export default class Decoder extends Extendable {
