@@ -105,7 +105,7 @@ export default class Decoder extends Extendable {
   readArray(length: number): any {
     let out = [];
     for (let i = 0; i < length; ++i) {
-      out.push(this.decodeValue(this.buffer));
+      out.push(this.decodeValue());
     }
     return out;
   }
@@ -177,7 +177,7 @@ export default class Decoder extends Extendable {
       case tags.BINARY_: {
         let length: number = this.decodeValue();
         // alternative to Uint8Array.from(...) for old browsers
-        let out = new Uint8Array;
+        let out = new Uint8Array(length);
         for (let i = 0; i < length; ++i) {
           out[i] = this.buffer[this.ptr + i];
         }

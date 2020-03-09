@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { encode, decode } from '../..';
+import { encode, decode } from '../../src/index';
 import types from '../../src/type-tags';
 
 import floats from './floats';

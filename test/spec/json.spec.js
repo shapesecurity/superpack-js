@@ -1,7 +1,7 @@
 'use strict';
 
 import { expect } from 'chai';
-import { encode, decode } from '../..';
+import { encode, decode } from '../../src/index';
 import cases from './cases';
 
 let jsonStrings = [

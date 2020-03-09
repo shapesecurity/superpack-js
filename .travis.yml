@@ -3,7 +3,7 @@ language: node_js
 script:
   - curl https://raw.githubusercontent.com/shapesecurity/CLA/master/cla-travis.sh | bash
   - npm run test:ci
-node_js: '6'
+node_js: "12"
 env:
   matrix:
     - BROWSERS=IE
@@ -12,7 +12,8 @@ env:
     - BROWSERS=FIREFOX
     - BROWSERS=CHROME
     - BROWSERS=ANDROID
-    - BROWSERS=IPHONE
+    #- BROWSERS=IPHONE
+    - BROWSERS=OTHERS
   global:
     - BROWSERSTACK_USERNAME=u865
-    - secure: MpYdYMsdBvcH8nn5PJpY7DJLz2Azn4/NHA1CYwBdyu2ISKr6bJevtiOpJEXl4LYbdyJN8JM+VSgEiUgDwA8TUv4F2vys1m8lwOraLnCXEDipJ+up0wbl7hncG0CXOHlI4GSDKPY8qAl7A5/Kv/zUrAsk3iR2c6BGpihrcL8p+XWHxWURcEijmQ52tvTCG50f8N0ng1fa1nPynBqhTkaY7GD1HucfA/qCmZnLB99QDUeQmWYHMtU11V+w8dg3HZRM48YOACp5M0CeqnMjP33CqdJVVpwbnaTTtCEGdtCeeb/QvPSR9zyFmMpON4Fg7Y3fEv+kZ0OoU0n/GGwHhoV2bnc9v0gxNRs1rY7UT6+9yF54BBlZ3X3+cDx/KQOlXiffd5ppIFV4sJqY4nkl5lp7e8nv9WIg2bFLOiMTTmdozXO9s8lt7keX3yCOAF57pSn/aNyj6u2MnhuZeFUTWvKl54Fw5CABQbyNtQDCNHXgXf0tenVsRGpCar9Xq4Dx1EEW0stIan0GEnrjDme8UOfTLFtmWPYKXH5WDS56njZsx6ra9DatZs0ulW72+hSu9CLm9y6gW1xot2Eb2xZhWEcuU5NKqUAb+a4F9eHf0S5+6Ugwg9apV0asmB7vbPZhhlY6tS6om/HwxZhQJfU1ZiMECZGFKtS4ZeUpzphBwlvKy2I=
+    - secure: kgG+LFQY7a4VoCuyrnxP8s6blOP1s0N+JxMqPGSSQfiEWHEButSDIhnFyftJaoZ73tjsoECYWllZdhyBC5kgZ3MQOfeETyiRxvPY+vx5z8yEvf2asDgsS88glFWWe4QFSdQJvRbBAvYvM0PJbdVz5mZ3gWUJ5wpSQzz6K4ZAN85j2cMRFuF6mLO6eSumO8ddAAhlzed9K5aqTzX1s/QSoq7ujNrJDBQqZJC+lxq+nyyY5pDsqVSygNItJ93nDxATC36/VyHlmoIwxyDuINsFmL1KqViolsBfjh9zY09Tk9kl3puRtURIu0Cj6f+DaTteeYFrG933/SZlYQBTHfb10S3Qzq4p1wFwwmkcJTCnnYB9dq7CfusJ1iV7ga1oTPEnWFvfhR65qdyL8mQACefISpOIuOybNhY0G43TSGpmOLfDEFpiUpqVfMcpUITONuwqXvkzgvnj1RNLaG34KxInJd6I/vpTBI+kB1UmQF9ZZcrT/cpKeFfzNuMJqApRzSpQGLBpLF/y+D12ag0iNNN+5vmVgJFtdSlNCqgmdtImdhpv43USkk8aJpVf7L7xbgsxotzV8hdxTMkv2I1w2aGqKkm4h67b1BKOllCFz0J1G2C0HA+ubtnhmed9d476Wzx5oOuTBo1NRptcfQaenB2defnl4vb59US3RK5BUI/PSGQ=
