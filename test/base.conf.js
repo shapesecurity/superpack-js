@@ -37,16 +37,16 @@ module.exports = {
   coverageReporter: {
     check: {
       global: {
-        lines: 95,
-        branches: 95,
-        functions: 100,
-        statements: 95,
+        lines: 80,
+        branches: 70,
+        functions: 91,
+        statements: 80,
       },
       each: {
-        lines: 95,
-        branches: 95,
-        functions: 100,
-        statements: 95,
+        lines: 75,
+        branches: 60,
+        functions: 85,
+        statements: 75,
       },
     },
     reporters: [
