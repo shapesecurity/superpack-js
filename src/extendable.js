@@ -1,11 +1,13 @@
 export type ExtensionPoint = number;
 
+export type Extension = {
+  detector : any => boolean,
+  serialiser : any => any,
+  deserialiser : any => any,
+};
+
 export type ExtensionMap = {
-  [extensionPoint : ExtensionPoint] : {
-    detector : any => boolean,
-    serialiser : any => any,
-    deserialiser : any => any
-  }
+  [extensionPoint : ExtensionPoint] : Extension,
 };
 
 export default class Extendable {
