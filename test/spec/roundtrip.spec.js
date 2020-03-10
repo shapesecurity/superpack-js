@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { encode, decode, depthBoundExtensionPoint, depthBoundExtension, depthBoundReached } from '../../src/index';
+import { encode, decode, depthBoundExtension, depthBoundReached } from '../../src/index';
 import types from '../../src/type-tags';
 
 import floats from './floats';
@@ -124,14 +124,14 @@ describe('omitted keysets', () => {
 
 describe('depth bound', function () {
   it('should allow bounding depth to 0', function () {
-    let extensions = { [depthBoundExtensionPoint] : depthBoundExtension };
+    let extensions = { '1' : depthBoundExtension };
     let encoded = encode({ a: 0 }, { extensions, depthBound: 0 });
     let decoded = decode(encoded, { extensions });
     expect(decoded).to.equal(depthBoundReached);
   });
 
   it('should allow bounding depth to 2', function () {
-    let extensions = { [depthBoundExtensionPoint] : depthBoundExtension };
+    let extensions = { '1' : depthBoundExtension };
     let encoded = encode([{ a: [], b: {}, c: 0 }, [[], 1]], { extensions, depthBound: 2 });
     let decoded = decode(encoded, { extensions });
     expect(decoded).to.eql([{ a: depthBoundReached, b: depthBoundReached, c: 0 }, [depthBoundReached, 1]]);

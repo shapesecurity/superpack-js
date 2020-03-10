@@ -49,11 +49,11 @@ where `extensionPoint` is a number. The decoder must have the same extensions at
 This implementation includes a buit-in extension which allows bounding the depth of object / array nesting allowed. Once reached, a sigil value is emitted instead. It is used as
 
 ```js
-import {encode, depthBoundExtensionPoint, depthBoundExtension} from "superpack";
+import {encode, depthBoundExtension} from "superpack";
 encode(data, {
   depthBound: 2,
   extensions: {
-    [depthBoundExtensionPoint]: depthBoundExtension
+    [0xDEADBEEF]: depthBoundExtension
   }
 });
 ```

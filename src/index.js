@@ -32,4 +32,4 @@ Transcoder.decode = Decoder.decode;
 
 export { default as Encoder, encode } from './encoder.js';
 export { default as Decoder, decode } from './decoder.js';
-export { depthBoundReached, extensionPoint as depthBoundExtensionPoint, extension as depthBoundExtension } from './depth-bound-extension.js';
+export { depthBoundReached, extension as depthBoundExtension } from './depth-bound-extension.js';

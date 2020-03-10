@@ -4,7 +4,7 @@
 import tags from './type-tags.js';
 import Extendable from './extendable.js';
 import type { ExtensionMap, ExtensionPoint } from './extendable.js';
-import { extensionPoint as depthBoundExtensionPoint, extension as depthBoundExtension } from './depth-bound-extension.js';
+import { extension as depthBoundExtension } from './depth-bound-extension.js';
 
 // TODO: refactor string encoding (a la superpack-java) so that this can be just Array<number>
 type SuperPackedValue = Array<number | string>;
@@ -269,26 +269,42 @@ export default class Encoder extends Extendable {
   stringHist : StringHistogram
   stringPlaceholders : boolean
   remainingDepth : number | null;
+  depthBoundExtensionPoint : number | null;
 
-  constructor(depthBound?: number | null) {
+  constructor(depthBound?: number | null, depthBoundExtensionPoint?: number | null) {
+    if (depthBound != null && depthBoundExtensionPoint == null || depthBound == null && depthBoundExtensionPoint != null) {
+      throw new TypeError('depthBound must be specified if and only if depthBoundExtensionPoint is');
+    }
     super();
     this.keysets = [];
     this.stringHist = {};
     this.stringPlaceholders = true;
     this.remainingDepth = depthBound == null ? null : depthBound;
+    this.depthBoundExtensionPoint = depthBoundExtensionPoint == null ? null : depthBoundExtensionPoint;
   }
 
   static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap, depthBound?: number } = {}) : SuperPackedValue {
+    let depthBoundExtensionPoint = null;
     if (options.depthBound != null) {
       let depthBound = options.depthBound;
       if (depthBound < 0 || Math.floor(depthBound) !== depthBound) {
         throw new RangeError('depthBound, if specified, must be a non-negative integer');
       }
-      if (options.extensions == null || options.extensions[depthBoundExtensionPoint] != depthBoundExtension) {
+      if (options.extensions != null) {
+        Object.keys(options.extensions).forEach(key => {
+          let ext : ExtensionPoint = +key;
+          // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
+          let extension = options.extensions[ext];
+          if (extension === depthBoundExtension) {
+            depthBoundExtensionPoint = ext;
+          }
+        });
+      }
+      if (depthBoundExtensionPoint === null) {
         throw new Error('if depthBound is used, its corresponding extension must be provided');
       }
     }
-    let e = new Encoder(options.depthBound);
+    let e = new Encoder(options.depthBound, depthBoundExtensionPoint);
     if (options.extensions != null) {
       // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
       Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
@@ -404,7 +420,8 @@ export default class Encoder extends Extendable {
       if (this.remainingDepth !== null) {
         if (this.remainingDepth === 0) {
           target.push(tags.EXTENSION);
-          encodeUInt(0xDEADBEEF, target);
+          // $FlowFixMe if remainingDepth !== null, depthBoundExtensionPoint is a number
+          encodeUInt((this.depthBoundExtensionPoint : number), target);
           target.push(tags.NULL);
           return target;
         }
