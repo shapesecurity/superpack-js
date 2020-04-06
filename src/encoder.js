@@ -421,7 +421,7 @@ export default class Encoder extends Extendable {
       this.pushArrayElements(new Uint8Array(value), target);
     } else {
       if (this.remainingDepth !== null) {
-        if (this.remainingDepth === 0) {
+        if (this.remainingDepth <= 0) {
           target.push(tags.EXTENSION);
           if (this.depthBoundExtensionPoint == null) {
             throw new Error('if remainingDepth != null, depthBoundExtensionPoint must not be either');
