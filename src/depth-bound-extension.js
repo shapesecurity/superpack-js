@@ -6,7 +6,7 @@ export const depthBoundReached = {};
 export const extension : Extension = {
   detector: () => false,
   serialiser: () => {
-    throw new Error('serialization is hardcoded into the encoder');
+    throw new Error('serialisation is hard-coded into the encoder');
   },
   deserialiser: () => depthBoundReached,
 };

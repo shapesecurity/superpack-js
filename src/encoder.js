@@ -303,6 +303,9 @@ export default class Encoder extends Extendable {
       if (depthBoundExtensionPoint === null) {
         throw new Error('if depthBound is used, its corresponding extension must be provided');
       }
+      // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
+    } else if (options.extensions != null && Object.keys(options.extensions).some(e => options.extensions[e] === depthBoundExtension)) {
+      throw new Error('if the depthBound extension is used, a depth bound must be specified');
     }
     let e = new Encoder(options.depthBound, depthBoundExtensionPoint);
     if (options.extensions != null) {
@@ -420,7 +423,9 @@ export default class Encoder extends Extendable {
       if (this.remainingDepth !== null) {
         if (this.remainingDepth === 0) {
           target.push(tags.EXTENSION);
-          // $FlowFixMe if remainingDepth !== null, depthBoundExtensionPoint is a number
+          if (this.depthBoundExtensionPoint == null) {
+            throw new Error('if remainingDepth != null, depthBoundExtensionPoint must not be either');
+          }
           encodeUInt((this.depthBoundExtensionPoint : number), target);
           target.push(tags.NULL);
           return target;

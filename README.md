@@ -44,18 +44,25 @@ encode(data, {
 where `extensionPoint` is a number. The decoder must have the same extensions at the same extension points.
 
 
-## Depth bound extension
+### Depth bound extension
 
-This implementation includes a buit-in extension which allows bounding the depth of object / array nesting allowed. Once reached, a sigil value is emitted instead. It is used as
+This implementation includes a built-in extension which allows bounding the depth of object / array nesting. Once reached, a sentinel value is emitted instead. It is used as
 
 ```js
-import {encode, depthBoundExtension} from "superpack";
-encode(data, {
+import {encode, decode, depthBoundExtension, depthBoundReached} from "superpack";
+let encoded = encode({ data: [0, { x: 'a' }] }, {
   depthBound: 2,
   extensions: {
     [0xDEADBEEF]: depthBoundExtension
   }
 });
+let decoded = decode(encoded, {
+  extensions: {
+    [0xDEADBEEF]: depthBoundExtension
+  }
+});
+console.log(decoded); // { data: [ 0, {} ] }
+assert(decoded.data[1] === depthBoundReached);
 ```
 
 
