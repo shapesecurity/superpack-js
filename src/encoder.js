@@ -300,7 +300,7 @@ export default class Encoder extends Extendable {
           }
         });
       }
-      if (depthBoundExtensionPoint === null) {
+      if (depthBoundExtensionPoint == null) {
         throw new Error('if depthBound is used, its corresponding extension must be provided');
       }
       // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
