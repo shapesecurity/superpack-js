@@ -4,6 +4,7 @@
 import tags from './type-tags.js';
 import Extendable from './extendable.js';
 import type { ExtensionMap, ExtensionPoint } from './extendable.js';
+import { extension as depthBoundExtension } from './depth-bound-extension.js';
 
 // TODO: refactor string encoding (a la superpack-java) so that this can be just Array<number>
 type SuperPackedValue = Array<number | string>;
@@ -267,16 +268,46 @@ export default class Encoder extends Extendable {
   keysets: Array<Keyset>
   stringHist : StringHistogram
   stringPlaceholders : boolean
+  remainingDepth : number | null;
+  depthBoundExtensionPoint : number | null;
 
-  constructor() {
+  constructor(depthBound?: number | null, depthBoundExtensionPoint?: number | null) {
+    if (depthBound != null && depthBoundExtensionPoint == null || depthBound == null && depthBoundExtensionPoint != null) {
+      throw new TypeError('depthBound must be specified if and only if depthBoundExtensionPoint is');
+    }
     super();
     this.keysets = [];
     this.stringHist = {};
     this.stringPlaceholders = true;
+    this.remainingDepth = depthBound == null ? null : depthBound;
+    this.depthBoundExtensionPoint = depthBoundExtensionPoint == null ? null : depthBoundExtensionPoint;
   }
 
-  static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap } = {}) : SuperPackedValue {
-    let e = new Encoder;
+  static encode(value : any, options? : { keysetsToOmit? : Array<Keyset>, extensions? : ExtensionMap, depthBound?: number } = {}) : SuperPackedValue {
+    let depthBoundExtensionPoint = null;
+    if (options.depthBound != null) {
+      let depthBound = options.depthBound;
+      if (depthBound < 0 || Math.floor(depthBound) !== depthBound) {
+        throw new RangeError('depthBound, if specified, must be a non-negative integer');
+      }
+      if (options.extensions != null) {
+        Object.keys(options.extensions).forEach(key => {
+          let ext : ExtensionPoint = +key;
+          // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
+          let extension = options.extensions[ext];
+          if (extension === depthBoundExtension) {
+            depthBoundExtensionPoint = ext;
+          }
+        });
+      }
+      if (depthBoundExtensionPoint == null) {
+        throw new Error('if depthBound is used, its corresponding extension must be provided');
+      }
+      // $FlowFixMe: flow doesn't understand that options.extensions is non-null here
+    } else if (options.extensions != null && Object.keys(options.extensions).some(e => options.extensions[e] === depthBoundExtension)) {
+      throw new Error('if the depthBound extension is used, a depth bound must be specified');
+    }
+    let e = new Encoder(options.depthBound, depthBoundExtensionPoint);
     if (options.extensions != null) {
       // $FlowFixMe: flow doesn't understand that ext is an ExtensionPoint
       Object.keys(options.extensions).forEach((ext : ExtensionPoint) => {
@@ -388,62 +419,79 @@ export default class Encoder extends Extendable {
       target.push(tags.BINARY_);
       this.encodeValue(value.byteLength, target);
       this.pushArrayElements(new Uint8Array(value), target);
-    } else if (Array.isArray(value)) {
-      let numElements = value.length;
-
-      let containsOnlyBooleans = true;
-
-      containsOnlyBooleans = value.every(element => typeof element === 'boolean');
-
-      if (containsOnlyBooleans && numElements > 0) {
-        if (numElements <= 15) {
-          target.push(tags.BARRAY4_BASE | numElements);
-        } else if (numElements <= 255) {
-          target.push(tags.BARRAY8, numElements);
-        } else {
-          target.push(tags.BARRAY_);
-          encodeUInt(numElements, target);
-        }
-        for (let i = 0; i < numElements; i += 8) {
-          // note: there's some out of bounds going on here, but it works out like we want
-          target.push(byteFromBools(value, i));
-        }
-      } else {
-        if (numElements <= 31) {
-          target.push(tags.ARRAY5_BASE | numElements);
-        } else if (numElements <= 255) {
-          target.push(tags.ARRAY8, numElements);
-        } else {
-          target.push(tags.ARRAY_);
-          encodeUInt(numElements, target);
-        }
-        this.pushArrayElements(value, target);
-      }
     } else {
-      // assumption: anything not in an earlier case can be treated as an object
-      let keys: string[] = Object.keys(value).sort();
-      let numKeys = keys.length;
-      let keysetIndex = this.findKeysetIndex(keys);
-
-      let containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
-
-      if (containsOnlyBooleans) {
-        target.push(tags.BMAP_);
-        encodeUInt(keysetIndex, target);
-
-        let b = [0, 0, 0, 0, 0, 0, 0, 0];
-        for (let i = 0; i < numKeys; i += 8) {
-          for (let j = 0; j < 8; ++j) {
-            // $FlowFixMe: flow doesn't like our fancy hacks
-            b[j] = i + j < numKeys && value[keys[i + j]];
+      if (this.remainingDepth !== null) {
+        if (this.remainingDepth <= 0) {
+          target.push(tags.EXTENSION);
+          if (this.depthBoundExtensionPoint == null) {
+            throw new Error('if remainingDepth != null, depthBoundExtensionPoint must not be either');
           }
-          target.push(byteFromBools(b, 0));
+          encodeUInt((this.depthBoundExtensionPoint : number), target);
+          target.push(tags.NULL);
+          return target;
+        }
+        --this.remainingDepth;
+      }
+      if (Array.isArray(value)) {
+        let numElements = value.length;
+
+        let containsOnlyBooleans = true;
+
+        containsOnlyBooleans = value.every(element => typeof element === 'boolean');
+
+        if (containsOnlyBooleans && numElements > 0) {
+          if (numElements <= 15) {
+            target.push(tags.BARRAY4_BASE | numElements);
+          } else if (numElements <= 255) {
+            target.push(tags.BARRAY8, numElements);
+          } else {
+            target.push(tags.BARRAY_);
+            encodeUInt(numElements, target);
+          }
+          for (let i = 0; i < numElements; i += 8) {
+            // note: there's some out of bounds going on here, but it works out like we want
+            target.push(byteFromBools(value, i));
+          }
+        } else {
+          if (numElements <= 31) {
+            target.push(tags.ARRAY5_BASE | numElements);
+          } else if (numElements <= 255) {
+            target.push(tags.ARRAY8, numElements);
+          } else {
+            target.push(tags.ARRAY_);
+            encodeUInt(numElements, target);
+          }
+          this.pushArrayElements(value, target);
         }
       } else {
-        target.push(tags.MAP_);
-        encodeUInt(keysetIndex, target);
+        // assumption: anything not in an earlier case can be treated as an object
+        let keys: string[] = Object.keys(value).sort();
+        let numKeys = keys.length;
+        let keysetIndex = this.findKeysetIndex(keys);
 
-        keys.forEach(key => this.encodeValue(value[key], target));
+        let containsOnlyBooleans = keys.every(key => typeof value[key] === 'boolean');
+
+        if (containsOnlyBooleans) {
+          target.push(tags.BMAP_);
+          encodeUInt(keysetIndex, target);
+
+          let b = [0, 0, 0, 0, 0, 0, 0, 0];
+          for (let i = 0; i < numKeys; i += 8) {
+            for (let j = 0; j < 8; ++j) {
+              // $FlowFixMe: flow doesn't like our fancy hacks
+              b[j] = i + j < numKeys && value[keys[i + j]];
+            }
+            target.push(byteFromBools(b, 0));
+          }
+        } else {
+          target.push(tags.MAP_);
+          encodeUInt(keysetIndex, target);
+
+          keys.forEach(key => this.encodeValue(value[key], target));
+        }
+      }
+      if (this.remainingDepth !== null) {
+        ++this.remainingDepth;
       }
     }
     return target;

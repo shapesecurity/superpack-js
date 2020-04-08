@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { encode, decode } from '../../src/index';
+import { encode, decode, depthBoundExtension, depthBoundReached } from '../../src/index';
 import types from '../../src/type-tags';
 
 import floats from './floats';
@@ -119,5 +119,24 @@ describe('omitted keysets', () => {
     };
     let omitted = [['a', 'c'], ['d'], ['f']];
     expect(decode(encode(o, { keysetsToOmit: omitted }), { omittedKeysets: omitted })).to.eql(o);
+  });
+});
+
+describe('depth bound', function () {
+  it('should allow bounding depth to 0', function () {
+    let extensions = { '1' : depthBoundExtension };
+    let encoded = encode({ a: 0 }, { extensions, depthBound: 0 });
+    let decoded = decode(encoded, { extensions });
+    expect(decoded).to.equal(depthBoundReached);
+  });
+
+  it('should allow bounding depth to 2', function () {
+    let extensions = { '1' : depthBoundExtension };
+    let encoded = encode([{ a: [], b: {}, c: 0 }, [[], 1]], { extensions, depthBound: 2 });
+    let decoded = decode(encoded, { extensions });
+    expect(decoded).to.eql([{ a: depthBoundReached, b: depthBoundReached, c: 0 }, [depthBoundReached, 1]]);
+    expect(decoded[0].a).to.equal(depthBoundReached);
+    expect(decoded[0].b).to.equal(depthBoundReached);
+    expect(decoded[1][0]).to.equal(depthBoundReached);
   });
 });

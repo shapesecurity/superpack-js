@@ -25,6 +25,46 @@ let payload = encode(/* your SuperPack-serialisable value */);
 let reconstructedValue = decode(payload);
 ```
 
+## Extensions
+
+`encode` and `decode` take a second argument which is an options bag. It allows specifying extensions as follows:
+
+```js
+encode(data, {
+  extensions: {
+    [extensionPoint]: {
+      detector: value => false,
+      serialiser: value => serialize(value),
+      deserialiser: serializedValue => deserialise(serializedValue),
+    }
+  }
+});
+````
+
+where `extensionPoint` is a number. The decoder must have the same extensions at the same extension points.
+
+
+### Depth bound extension
+
+This implementation includes a built-in extension which allows bounding the depth of object / array nesting. Once reached, a sentinel value is emitted instead. It is used as
+
+```js
+import {encode, decode, depthBoundExtension, depthBoundReached} from "superpack";
+let encoded = encode({ data: [0, { x: 'a' }] }, {
+  depthBound: 2,
+  extensions: {
+    [0xDEADBEEF]: depthBoundExtension
+  }
+});
+let decoded = decode(encoded, {
+  extensions: {
+    [0xDEADBEEF]: depthBoundExtension
+  }
+});
+console.log(decoded); // { data: [ 0, {} ] }
+assert(decoded.data[1] === depthBoundReached);
+```
+
 
 ## Contributing
 
