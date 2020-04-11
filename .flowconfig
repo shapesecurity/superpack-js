@@ -4,6 +4,7 @@
 <PROJECT_ROOT>/dist/.*
 <PROJECT_ROOT>/build/.*
 <PROJECT_ROOT>/index.js
+<PROJECT_ROOT>/esm.js
 <PROJECT_ROOT>/encoder.js
 <PROJECT_ROOT>/decoder.js
 <PROJECT_ROOT>/superpack.js
